@@ -2,9 +2,22 @@ use axum::{
     http::StatusCode,
     response::IntoResponse,
     Json,
-    extract::Path,
+    extract::{Path, Query},
 };
 use serde::{Deserialize, Serialize};
+
+// the input to our `create_user` handler
+#[derive(Deserialize)]
+pub struct CreateUser {
+    username: String,
+}
+
+// the output to our `create_user` handler
+#[derive(Serialize)]
+struct User {
+    id: u64,
+    username: String,
+}
 
 pub async fn create_user(
     // this argument tells axum to parse the request body
@@ -22,20 +35,6 @@ pub async fn create_user(
     (StatusCode::CREATED, Json(user))
 }
 
-// the input to our `create_user` handler
-#[derive(Deserialize)]
-pub struct CreateUser {
-    username: String,
-}
-
-// the output to our `create_user` handler
-#[derive(Serialize)]
-struct User {
-    id: u64,
-    username: String,
-}
-
-pub async fn key_fn(Path(key): Path<i32>) -> String {
-    
-    format!("hello {key}")
+pub async fn key_fn(Path((key, key2)): Path<(i32, String)>) -> String {
+    format!("hello {key}, {key2}")
 }
