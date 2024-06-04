@@ -4,16 +4,16 @@ use axum::{
     middleware::{self},
 };
 use crate::middlewares::*;
-use crate::handlers::*;
+
+pub mod api;
+pub mod admin;
 
 pub fn init() -> Router {
     let mut app = Router::new()
-        .route("/", get(hello::hello_fn))
-        .route("/truc", get(hello::truc_fn))
-        .route("/api", post(api::create_user));
-        
-        app = Router::route(app, "/machin/:key/:key2", get(api::key_fn));
-        app = app.layer(middleware::from_fn(redirect::check_if_redirect_to));
+    .merge(admin::init_admin_routes())
+    .merge(api::init_api_routes());
+
+    app = app.layer(middleware::from_fn(redirect::check_if_redirect_to));
 
     return app;
 }
