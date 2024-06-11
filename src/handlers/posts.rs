@@ -1,9 +1,9 @@
-/*use axum::{
+use axum::{
     http::StatusCode,
-    response::IntoResponse,
     Json,
-    extract::{Path, Query},
-};*/
+};
+
+use crate::errors::error;
 //use serde::{Deserialize, Serialize};
 
 use diesel::prelude::*;
@@ -18,8 +18,7 @@ pub async fn hello_fn() -> Html<&'static str> {
     Html("<h1>Hello !</h1>")
 }
 
-pub async fn show_posts() -> () {
-    
+pub async fn show_posts() -> Result<Json<Vec<Post>>, Json<crate::errors::ErrorResponse>> {
 
     let connection = &mut database::establish_connection();
     let results = posts
@@ -29,10 +28,17 @@ pub async fn show_posts() -> () {
         .load(connection)
         .expect("Error loading posts");
 
-    println!("Displaying {} posts", results.len());
-    for post in results {
-        println!("{}", post.title);
-        println!("-----------\n");
-        println!("{}", post.body);
+    if results.len() == 0 {
+        let err: crate::errors::ErrorResponse = error(StatusCode::INTERNAL_SERVER_ERROR.as_str(), "No Posts found");
+    
+        Err(Json(err))
+    } else {
+        println!("Displaying {} posts", results.len());
+        
+        Ok(Json(results))
     }
+}
+
+pub async fn create_posts() -> () {
+
 }
