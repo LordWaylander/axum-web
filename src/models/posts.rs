@@ -12,3 +12,11 @@ pub struct Post {
     pub body: String,
     pub published: bool,
 }
+
+#[derive(Insertable)]
+#[diesel(table_name = posts)]
+#[derive(Deserialize)]
+pub struct NewPost {
+    pub title: String,
+    pub body: String,
+}

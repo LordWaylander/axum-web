@@ -1,6 +1,5 @@
 use axum::{
     Router,
-    routing::{get, post},
     middleware::{self},
 };
 use crate::middlewares::*;
