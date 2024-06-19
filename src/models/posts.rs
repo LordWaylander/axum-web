@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[diesel(table_name = posts)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 #[derive(Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct Post {
     pub id: i32,
     pub title: String,
@@ -19,4 +20,15 @@ pub struct Post {
 pub struct NewPost {
     pub title: String,
     pub body: String,
+    pub published : Option<bool>,
+}
+
+#[derive(AsChangeset)]
+#[diesel(table_name = posts)]
+#[derive(Serialize, Deserialize)]
+pub struct UpdatePost {
+    pub id: i32,
+    pub title: Option<String>,
+    pub body: Option<String>,
+    pub published : Option<bool>,
 }
