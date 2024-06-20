@@ -48,7 +48,8 @@ pub fn create_post(Json(payload): Json<NewPost>) -> Result<Post, diesel::result:
     let new_post = NewPost { 
         title : payload.title, 
         body : payload.body, 
-        published: Some(payload.published.unwrap_or(false))
+        published: Some(payload.published.unwrap_or(false)),
+        user_id: payload.user_id
     };
 
     let result: Result<Post, Error> = connection.transaction(|connection| {

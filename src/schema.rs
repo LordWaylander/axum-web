@@ -7,6 +7,7 @@ diesel::table! {
         title -> Varchar,
         body -> Text,
         published -> Bool,
+        user_id -> Integer,
     }
 }
 
@@ -21,6 +22,8 @@ diesel::table! {
         password -> Varchar,
     }
 }
+
+diesel::joinable!(posts -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     posts,

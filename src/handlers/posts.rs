@@ -1,16 +1,11 @@
 use axum::{
     http::StatusCode,
     Json,
-    extract::Path,
-    response::Html
+    extract::Path
 };
 use crate::errors::error;
 use crate::repository::post;
 use crate::models::posts::{NewPost, Post, UpdatePost};
-
-pub async fn hello_fn() -> Html<&'static str> {
-    Html("<h1>Hello !</h1>")
-}
 
 pub async fn show_posts() -> Result<Json<Vec<Post>>, Json<crate::errors::ErrorResponse>> {
 
