@@ -28,8 +28,7 @@ pub async fn show_posts() -> Result<Json<Vec<Post>>, Json<crate::errors::ErrorRe
             
         },
         Err(e) => {
-            let msg: String = format!("Error : {e}");
-            let err: crate::errors::ErrorResponse = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(),msg );
+            let err: crate::errors::ErrorResponse = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(),e.to_string() );
             Err(Json(err))
         },
     }
@@ -42,8 +41,7 @@ pub async fn create_post(Json(payload): Json<NewPost>) -> Result<Json<Post>, Jso
     match result {
         Ok(post) => Ok(Json(post)),
         Err(e) => {
-            let msg: String = format!("Error : {e}");
-            let err: crate::errors::ErrorResponse = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(),msg );
+            let err: crate::errors::ErrorResponse = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(),e.to_string() );
             Err(Json(err))
         },
     }
@@ -56,8 +54,7 @@ pub async fn update_post(Json(payload): Json<UpdatePost>) -> Result<Json<Post>, 
     match result {
         Ok(post) => Ok(Json(post)),
         Err(e) => {
-            let msg = format!("Error: {}", e);
-            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), msg);
+            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
             Err(Json(err))
         },
     }
@@ -71,8 +68,7 @@ pub async fn get_one_post(Path(id): Path<i32>) -> Result<Json<Post>, Json<crate:
     match result {
         Ok(post) => Ok(Json(post)),
         Err(e) => {
-            let msg = format!("Error: {}", e);
-            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), msg);
+            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
             Err(Json(err))
         },
     }
@@ -87,8 +83,7 @@ pub async fn delete_post(Path(id): Path<i32>) -> Result<Json<String>, Json<crate
             Ok(Json(format!("Le post : {}, ID : {}, est bien supprimé", post.title, post.id)))
         },
         Err(e) => {
-            let msg = format!("Error: {}", e);
-            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), msg);
+            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
             Err(Json(err))
         },
     }
