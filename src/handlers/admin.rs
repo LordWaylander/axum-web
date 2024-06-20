@@ -5,9 +5,9 @@ use axum::{
 };
 use crate::errors::error;
 use crate::repository::users;
-use crate::models::users::{NewUser, User, UpdateUser};
+use crate::models::users::{NewUser, UpdateUser, PublicUser};
 
-pub async fn show_users() -> Result<Json<Vec<User>>, Json<crate::errors::ErrorResponse>> {
+pub async fn show_users() -> Result<Json<Vec<PublicUser>>, Json<crate::errors::ErrorResponse>> {
     let result: Result<_, _> = users::get_all_users();
 
     match result {
@@ -28,7 +28,7 @@ pub async fn show_users() -> Result<Json<Vec<User>>, Json<crate::errors::ErrorRe
     }
 }
 
-pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<User>, Json<crate::errors::ErrorResponse>> {
+pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<PublicUser>, Json<crate::errors::ErrorResponse>> {
     let result = users::get_one_user(Path(id));
 
     match result {
@@ -40,7 +40,7 @@ pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<User>, Json<crate:
     }
 }
 
-pub async fn create_user(Json(payload): Json<NewUser>) -> Result<Json<User>, Json<crate::errors::ErrorResponse>> {
+pub async fn create_user(Json(payload): Json<NewUser>) -> Result<Json<PublicUser>, Json<crate::errors::ErrorResponse>> {
     let result = users::create_user(Json(payload));
 
     match result {
@@ -52,7 +52,8 @@ pub async fn create_user(Json(payload): Json<NewUser>) -> Result<Json<User>, Jso
     }
 }
 
-pub async fn update_user(Json(payload): Json<UpdateUser>) -> Result<Json<User>, Json<crate::errors::ErrorResponse>> {
+pub async fn update_user(Json(payload): Json<UpdateUser>) -> Result<Json<PublicUser>, Json<crate::errors::ErrorResponse>> {
+
     let result = users::update_user(Json(payload));
 
     match result {

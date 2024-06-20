@@ -1,6 +1,6 @@
-use crate::models::users::{NewUser, User, UpdateUser};
+use crate::models::users::{NewUser, UpdateUser, PublicUser};
 use bcrypt::{hash, DEFAULT_COST};
-use crate::schema::users::dsl::{users, id, username, email };
+use crate::schema::users::dsl::*;
 use crate::database;
 use diesel::prelude::*;
 use diesel::result::Error;
@@ -9,15 +9,15 @@ use axum::{
     extract::Path
 };
 
-pub fn get_all_users() -> Result<Vec<User>, diesel::result::Error> {
+pub fn get_all_users() -> Result<Vec<PublicUser>, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<Vec<User>, Error> = connection.transaction(|connection| {
+    let result: Result<Vec<PublicUser>, Error> = connection.transaction(|connection| {
         let users_vector = users
         .order(id.asc())
         //.filter(published.eq(true))
         .limit(5)
-        .select(User::as_select())
+        .select(PublicUser::as_select())
         .get_results(connection)?;
 
         Ok(users_vector)
@@ -26,13 +26,13 @@ pub fn get_all_users() -> Result<Vec<User>, diesel::result::Error> {
     return result;
 }
 
-pub fn get_one_user(Path(other_id): Path<i32>) -> Result<User, diesel::result::Error> {
+pub fn get_one_user(Path(other_id): Path<i32>) -> Result<PublicUser, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<User, Error> = connection.transaction(|connection| {
+    let result: Result<PublicUser, Error> = connection.transaction(|connection| {
             let user = users
             .find(other_id)
-            .select(User::as_select())
+            .select(PublicUser::as_select())
             .first(connection)?;
 
         Ok(user)
@@ -41,10 +41,10 @@ pub fn get_one_user(Path(other_id): Path<i32>) -> Result<User, diesel::result::E
     return result;
 }
 
-pub fn create_user(Json(payload): Json<NewUser>) -> Result<User, diesel::result::Error> {
+pub fn create_user(Json(payload): Json<NewUser>) -> Result<PublicUser, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<User, Error> = connection.transaction(|connection| {
+    let result: Result<PublicUser, Error> = connection.transaction(|connection| {
 
         let hashed_password = hash_password(payload.password);
 
@@ -60,7 +60,7 @@ pub fn create_user(Json(payload): Json<NewUser>) -> Result<User, diesel::result:
 
             let post = users
             .order(id.desc())
-            .select(User::as_select())
+            .select(PublicUser::as_select())
             .first(connection)?;
 
             Ok(post)
@@ -69,10 +69,10 @@ pub fn create_user(Json(payload): Json<NewUser>) -> Result<User, diesel::result:
     return result;
 }
 
-pub fn update_user(Json(payload): Json<UpdateUser>) -> Result<User, diesel::result::Error> {
+pub fn update_user(Json(payload): Json<UpdateUser>) -> Result<PublicUser, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<User, Error> = connection.transaction(|connection| {
+    let result: Result<PublicUser, Error> = connection.transaction(|connection| {
 
         let hashed_password = payload.password.map(|pwd| hash_password(pwd));
 
@@ -89,7 +89,7 @@ pub fn update_user(Json(payload): Json<UpdateUser>) -> Result<User, diesel::resu
 
             let post = users
             .find(payload.id)
-            .select(User::as_select())
+            .select(PublicUser::as_select())
             .first(connection)?;
 
         Ok(post)
@@ -99,14 +99,14 @@ pub fn update_user(Json(payload): Json<UpdateUser>) -> Result<User, diesel::resu
 
 }
 
-pub fn delete_user(Path(other_id): Path<i32>) -> Result<User, diesel::result::Error> {
+pub fn delete_user(Path(other_id): Path<i32>) -> Result<PublicUser, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<User, Error> = connection.transaction(|connection| {
+    let result: Result<PublicUser, Error> = connection.transaction(|connection| {
 
         let post = users
         .find(&other_id)
-        .select(User::as_select())
+        .select(PublicUser::as_select())
         .get_result(connection)?;
 
         diesel::delete(users)
