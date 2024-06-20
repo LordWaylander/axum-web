@@ -1,18 +1,12 @@
 use axum::{
     http::StatusCode,
     Json,
+    extract::Path,
+    response::Html
 };
-
 use crate::errors::error;
-
-use diesel::prelude::*;
-use diesel::result::Error;
-use crate::schema;
-use crate::database;
+use crate::repository::post;
 use crate::models::posts::{NewPost, Post, UpdatePost};
-use crate::schema::posts;
-
-use axum::response::Html;
 
 pub async fn hello_fn() -> Html<&'static str> {
     Html("<h1>Hello !</h1>")
@@ -20,21 +14,19 @@ pub async fn hello_fn() -> Html<&'static str> {
 
 pub async fn show_posts() -> Result<Json<Vec<Post>>, Json<crate::errors::ErrorResponse>> {
 
-    let connection = &mut database::establish_connection();
-
-    let result: Result<Vec<Post>, Error> = connection.transaction(|conn| {
-        let posts = posts::table
-        .order(posts::id.asc())
-        //.filter(published.eq(true))
-        .limit(5)
-        .select(Post::as_select())
-        .get_results(conn)?;
-
-        Ok(posts)
-    });
+    let result = post::get_all_posts();
 
     match result {
-        Ok(post) => Ok(Json(post)),
+        Ok(post) => {
+            if post.len() == 0 {
+                let msg: String = format!("No posts found");
+                let err: crate::errors::ErrorResponse = error(StatusCode::OK.to_string(),msg );
+                Err(Json(err))
+            } else {
+                Ok(Json(post))
+            }
+            
+        },
         Err(e) => {
             let msg: String = format!("Error : {e}");
             let err: crate::errors::ErrorResponse = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(),msg );
@@ -44,26 +36,8 @@ pub async fn show_posts() -> Result<Json<Vec<Post>>, Json<crate::errors::ErrorRe
 }
 
 pub async fn create_post(Json(payload): Json<NewPost>) -> Result<Json<Post>, Json<crate::errors::ErrorResponse>> {
-    let connection = &mut database::establish_connection();
 
-    let new_post = NewPost { 
-        title : payload.title, 
-        body : payload.body, 
-        published: Some(payload.published.unwrap_or(false))
-    };
-
-    let result: Result<Post, Error> = connection.transaction(|conn| {
-        diesel::insert_into(posts::table)
-            .values(&new_post)
-            .execute(conn)?;
-
-            let post = posts::table
-            .order(posts::id.desc())
-            .select(Post::as_select())
-            .first(conn)?;
-
-            Ok(post)
-    }); 
+    let result = post::create_post(Json(payload));
 
     match result {
         Ok(post) => Ok(Json(post)),
@@ -77,28 +51,7 @@ pub async fn create_post(Json(payload): Json<NewPost>) -> Result<Json<Post>, Jso
 
 pub async fn update_post(Json(payload): Json<UpdatePost>) -> Result<Json<Post>, Json<crate::errors::ErrorResponse>> {
 
-    let connection = &mut database::establish_connection();
-
-    let result: Result<Post, Error> = connection.transaction(|connection| {
-
-        let update_post = UpdatePost {
-            id: payload.id,
-            title: payload.title,
-            body: payload.body,
-            published: payload.published,
-        };
-
-        diesel::update(posts::table.find(payload.id))
-            .set(&update_post)
-            .execute(connection)?;
-
-            let post = posts::table
-            .find(payload.id)
-            .select(Post::as_select())
-            .first(connection)?;
-
-        Ok(post)
-    });
+    let result = post::update_post(Json(payload));
 
     match result {
         Ok(post) => Ok(Json(post)),
@@ -109,4 +62,34 @@ pub async fn update_post(Json(payload): Json<UpdatePost>) -> Result<Json<Post>, 
         },
     }
 
+}
+
+pub async fn get_one_post(Path(id): Path<i32>) -> Result<Json<Post>, Json<crate::errors::ErrorResponse>> {
+
+    let result = post::get_one_post(Path(id));
+
+    match result {
+        Ok(post) => Ok(Json(post)),
+        Err(e) => {
+            let msg = format!("Error: {}", e);
+            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), msg);
+            Err(Json(err))
+        },
+    }
+}
+
+pub async fn delete_post(Path(id): Path<i32>) -> Result<Json<String>, Json<crate::errors::ErrorResponse>> {
+
+    let result = post::delete_post(Path(id));
+
+    match result {
+        Ok(post) => {
+            Ok(Json(format!("Le post : {}, ID : {}, est bien supprimé", post.title, post.id)))
+        },
+        Err(e) => {
+            let msg = format!("Error: {}", e);
+            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), msg);
+            Err(Json(err))
+        },
+    }
 }

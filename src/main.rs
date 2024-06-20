@@ -8,6 +8,7 @@ mod database;
 mod models;
 mod schema;
 mod errors;
+mod repository;
 
 #[tokio::main]
 async fn main() {
