@@ -29,6 +29,19 @@ pub async fn show_posts() -> Result<Json<Vec<Post>>, Json<crate::errors::ErrorRe
     }
 }
 
+pub async fn get_one_post(Path(id): Path<i32>) -> Result<Json<Post>, Json<crate::errors::ErrorResponse>> {
+
+    let result = post::get_one_post(Path(id));
+
+    match result {
+        Ok(post) => Ok(Json(post)),
+        Err(e) => {
+            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
+            Err(Json(err))
+        },
+    }
+}
+
 pub async fn create_post(Json(payload): Json<NewPost>) -> Result<Json<Post>, Json<crate::errors::ErrorResponse>> {
 
     let result = post::create_post(Json(payload));
@@ -45,20 +58,6 @@ pub async fn create_post(Json(payload): Json<NewPost>) -> Result<Json<Post>, Jso
 pub async fn update_post(Json(payload): Json<UpdatePost>) -> Result<Json<Post>, Json<crate::errors::ErrorResponse>> {
 
     let result = post::update_post(Json(payload));
-
-    match result {
-        Ok(post) => Ok(Json(post)),
-        Err(e) => {
-            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
-            Err(Json(err))
-        },
-    }
-
-}
-
-pub async fn get_one_post(Path(id): Path<i32>) -> Result<Json<Post>, Json<crate::errors::ErrorResponse>> {
-
-    let result = post::get_one_post(Path(id));
 
     match result {
         Ok(post) => Ok(Json(post)),

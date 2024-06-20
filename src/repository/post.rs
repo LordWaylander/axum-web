@@ -71,6 +71,8 @@ pub fn create_post(Json(payload): Json<NewPost>) -> Result<Post, diesel::result:
 pub fn update_post(Json(payload): Json<UpdatePost>) -> Result<Post, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
+    println!("{:?}", payload.published);
+
     let result: Result<Post, Error> = connection.transaction(|connection| {
 
         let update_post = UpdatePost {
