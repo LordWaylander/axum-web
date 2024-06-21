@@ -3,7 +3,7 @@ use crate::schema::posts;
 use crate::schema::posts::dsl::*;
 use crate::database;
 use crate::schema::users;
-use crate::models::users::PublicUser;
+use crate::models::users::User;
 
 use diesel::prelude::*;
 use diesel::result::Error;
@@ -12,16 +12,16 @@ use axum::{
     extract::Path
 };
 
-pub fn get_all_posts() -> Result<Vec<(Post, PublicUser)>, diesel::result::Error> {
+pub fn get_all_posts() -> Result<Vec<(Post, User)>, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<Vec<(Post, PublicUser)>, Error> = connection.transaction(|connection| {
+    let result: Result<Vec<(Post, User)>, Error> = connection.transaction(|connection| {
         let posts_vector = posts::table
         .order(posts::id.asc())
         .inner_join(users::table.on(posts::user_id.eq(users::id)))
         .limit(5)
-        .select((Post::as_select(), (PublicUser::as_select())))
-        .get_results::<(Post, PublicUser)>(connection)?;
+        .select((Post::as_select(), (User::as_select())))
+        .get_results::<(Post, User)>(connection)?;
 
         Ok(posts_vector)
     });
@@ -29,16 +29,16 @@ pub fn get_all_posts() -> Result<Vec<(Post, PublicUser)>, diesel::result::Error>
     return result;
 }
 
-pub fn get_one_post(Path(other_id): Path<i32>) -> Result<(Post, PublicUser), diesel::result::Error> {
+pub fn get_one_post(Path(other_id): Path<i32>) -> Result<(Post, User), diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<(Post, PublicUser), Error> = connection.transaction(|connection| {
+    let result: Result<(Post, User), Error> = connection.transaction(|connection| {
             let post = posts::table
             .find(other_id)
             .inner_join(users::table.on(posts::user_id.eq(users::id)))
             //.group_by(users::id)
-            .select((Post::as_select(), (PublicUser::as_select())))
-            .get_result::<(Post, PublicUser)>(connection)?;
+            .select((Post::as_select(), (User::as_select())))
+            .get_result::<(Post, User)>(connection)?;
 
         Ok(post)
     });

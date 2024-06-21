@@ -10,17 +10,7 @@ pub struct User {
     pub id: i32,
     pub username: String,
     pub email: String,
-    pub password: String,
-}
-
-#[derive(Queryable, PartialEq, Debug, Selectable)]
-#[diesel(table_name = users)]
-#[diesel(check_for_backend(diesel::mysql::Mysql))]
-#[derive(Serialize, Deserialize)]
-pub struct PublicUser {
-    pub id: i32,
-    pub username: String,
-    pub email: String,
+    //pub password: String,
 }
 
 #[derive(Insertable)]

@@ -1,6 +1,6 @@
 use crate::schema::users::dsl::*;
 use crate::schema::users;
-use crate::models::users::{NewUser, UpdateUser, PublicUser, User};
+use crate::models::users::{NewUser, UpdateUser, User};
 use crate::models::posts::Post;
 
 use crate::database;
@@ -13,10 +13,10 @@ use axum::{
     extract::Path
 };
 
-pub fn get_all_users() -> Result<Vec<(PublicUser, Vec<Post>)>, diesel::result::Error> {
+pub fn get_all_users() -> Result<Vec<(User, Vec<Post>)>, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<Vec<(PublicUser, Vec<Post>)>, Error> = connection.transaction(|connection| {
+    let result: Result<Vec<(User, Vec<Post>)>, Error> = connection.transaction(|connection| {
         /*let users_vector = users
         .order(users::id.asc())
         .inner_join(posts::table.on(posts::id.eq(posts::user_id)))
@@ -24,15 +24,12 @@ pub fn get_all_users() -> Result<Vec<(PublicUser, Vec<Post>)>, diesel::result::E
         .select((PublicUser::as_select(), Post::as_select()))
         .get_results::<(PublicUser, Post)>(connection)?;*/
 
-        let u = users.order(users::id.desc()).load::<User>(connection)?;
+        let u = users.order(users::id.desc()).select(User::as_select()).load::<User>(connection)?;
         let p = Post::belonging_to(&u)
         .load::<Post>(connection)?
         .grouped_by(&u);
 
-        // juste pour enlever le password de la réponse
-        let data = u.into_iter()
-        .map(|User {id: other_id, username : other_username, email : other_email, password : _other_password}| PublicUser { id : other_id, username : other_username, email  : other_email }).zip(p).collect::<Vec<_>>();
-
+        let data = u.into_iter().zip(p).collect::<Vec<_>>();
 
         Ok(data)
     });
@@ -40,25 +37,19 @@ pub fn get_all_users() -> Result<Vec<(PublicUser, Vec<Post>)>, diesel::result::E
     return result;
 }
 
-pub fn get_one_user(Path(other_id): Path<i32>) -> Result<Vec<(PublicUser, Vec<Post>)>, diesel::result::Error> {
+pub fn get_one_user(Path(other_id): Path<i32>) -> Result<Vec<(User, Vec<Post>)>, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<Vec<(PublicUser, Vec<Post>)>, Error> = connection.transaction(|connection| {
+    let result: Result<Vec<(User, Vec<Post>)>, Error> = connection.transaction(|connection| {
 
-        /*let user = users
-        .find(other_id)
-        .inner_join(posts::table.on(users::id.eq(posts::user_id)))
-        .select((PublicUser::as_select(), Post::as_select()))
-        .load::<(PublicUser, Post)>(connection)?;*/
-
-        let u = users.find(other_id).load::<User>(connection)?;
+        let u = users.find(other_id).select(User::as_select()).load::<User>(connection)?;
         let p = Post::belonging_to(&u)
             .load::<Post>(connection)?
             .grouped_by(&u);
 
         // juste pour enlever le password de la réponse
-        let data = u.into_iter()
-        .map(|User {id: other_id, username : other_username, email : other_email, password : _other_password}| PublicUser { id : other_id, username : other_username, email  : other_email }).zip(p).collect::<Vec<_>>();
+        //let data = u.into_iter().map(|User {id: other_id, username : other_username, email : other_email}| PublicUser { id : other_id, username : other_username, email  : other_email }).zip(p).collect::<Vec<_>>();
+        let data = u.into_iter().zip(p).collect::<Vec<_>>();
 
         Ok(data)
     });
@@ -66,10 +57,10 @@ pub fn get_one_user(Path(other_id): Path<i32>) -> Result<Vec<(PublicUser, Vec<Po
     return result;
 }
 
-pub fn create_user(Json(payload): Json<NewUser>) -> Result<PublicUser, diesel::result::Error> {
+pub fn create_user(Json(payload): Json<NewUser>) -> Result<User, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<PublicUser, Error> = connection.transaction(|connection| {
+    let result: Result<User, Error> = connection.transaction(|connection| {
 
         let hashed_password = hash_password(payload.password);
 
@@ -85,7 +76,7 @@ pub fn create_user(Json(payload): Json<NewUser>) -> Result<PublicUser, diesel::r
 
             let post = users
             .order(users::id.desc())
-            .select(PublicUser::as_select())
+            .select(User::as_select())
             .get_result(connection)?;
 
             Ok(post)
@@ -94,10 +85,10 @@ pub fn create_user(Json(payload): Json<NewUser>) -> Result<PublicUser, diesel::r
     return result;
 }
 
-pub fn update_user(Json(payload): Json<UpdateUser>) -> Result<PublicUser, diesel::result::Error> {
+pub fn update_user(Json(payload): Json<UpdateUser>) -> Result<User, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<PublicUser, Error> = connection.transaction(|connection| {
+    let result: Result<User, Error> = connection.transaction(|connection| {
 
         let hashed_password = payload.password.map(|pwd| hash_password(pwd));
 
@@ -114,7 +105,7 @@ pub fn update_user(Json(payload): Json<UpdateUser>) -> Result<PublicUser, diesel
 
             let post = users
             .find(payload.id)
-            .select(PublicUser::as_select())
+            .select(User::as_select())
             .get_result(connection)?;
 
         Ok(post)
@@ -124,14 +115,14 @@ pub fn update_user(Json(payload): Json<UpdateUser>) -> Result<PublicUser, diesel
 
 }
 
-pub fn delete_user(Path(other_id): Path<i32>) -> Result<PublicUser, diesel::result::Error> {
+pub fn delete_user(Path(other_id): Path<i32>) -> Result<User, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<PublicUser, Error> = connection.transaction(|connection| {
+    let result: Result<User, Error> = connection.transaction(|connection| {
 
         let post = users
         .find(&other_id)
-        .select(PublicUser::as_select())
+        .select(User::as_select())
         .get_result(connection)?;
 
         diesel::delete(users)
