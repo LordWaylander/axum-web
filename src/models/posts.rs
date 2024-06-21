@@ -1,8 +1,10 @@
 use crate::schema::posts;
+use crate::models::users::User;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Identifiable, Queryable, PartialEq, Debug, Selectable)]
+#[derive(Identifiable, Queryable, PartialEq, Debug, Selectable, Associations)]
+#[diesel(belongs_to(User))]
 #[diesel(table_name = posts)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 #[derive(Serialize, Deserialize)]

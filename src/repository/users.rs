@@ -1,7 +1,6 @@
 use crate::schema::users::dsl::*;
 use crate::schema::users;
-use crate::models::users::{NewUser, UpdateUser, PublicUser};
-use crate::schema::posts;
+use crate::models::users::{NewUser, UpdateUser, PublicUser, User};
 use crate::models::posts::Post;
 
 use crate::database;
@@ -14,37 +13,54 @@ use axum::{
     extract::Path
 };
 
-pub fn get_all_users() -> Result<Vec<(PublicUser, Post)>, diesel::result::Error> {
+pub fn get_all_users() -> Result<Vec<(PublicUser, Vec<Post>)>, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<Vec<(PublicUser, Post)>, Error> = connection.transaction(|connection| {
-        let users_vector = users
+    let result: Result<Vec<(PublicUser, Vec<Post>)>, Error> = connection.transaction(|connection| {
+        /*let users_vector = users
         .order(users::id.asc())
         .inner_join(posts::table.on(posts::id.eq(posts::user_id)))
         .limit(5)
         .select((PublicUser::as_select(), Post::as_select()))
-        .get_results::<(PublicUser, Post)>(connection)?;
+        .get_results::<(PublicUser, Post)>(connection)?;*/
 
-        Ok(users_vector)
+        let u = users.order(users::id.desc()).load::<User>(connection)?;
+        let p = Post::belonging_to(&u)
+        .load::<Post>(connection)?
+        .grouped_by(&u);
+
+        // juste pour enlever le password de la réponse
+        let data = u.into_iter()
+        .map(|User {id: other_id, username : other_username, email : other_email, password : _other_password}| PublicUser { id : other_id, username : other_username, email  : other_email }).zip(p).collect::<Vec<_>>();
+
+
+        Ok(data)
     });
 
     return result;
 }
 
-pub fn get_one_user(Path(other_id): Path<i32>) -> Result<Vec<(PublicUser, Post)>, diesel::result::Error> {
+pub fn get_one_user(Path(other_id): Path<i32>) -> Result<Vec<(PublicUser, Vec<Post>)>, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<Vec<(PublicUser, Post)>, Error> = connection.transaction(|connection| {
+    let result: Result<Vec<(PublicUser, Vec<Post>)>, Error> = connection.transaction(|connection| {
 
-        let user = users
+        /*let user = users
         .find(other_id)
         .inner_join(posts::table.on(users::id.eq(posts::user_id)))
         .select((PublicUser::as_select(), Post::as_select()))
-        .load::<(PublicUser, Post)>(connection)?;
+        .load::<(PublicUser, Post)>(connection)?;*/
 
-        println!("{:?}",user );
-            
-        Ok(user)
+        let u = users.find(other_id).load::<User>(connection)?;
+        let p = Post::belonging_to(&u)
+            .load::<Post>(connection)?
+            .grouped_by(&u);
+
+        // juste pour enlever le password de la réponse
+        let data = u.into_iter()
+        .map(|User {id: other_id, username : other_username, email : other_email, password : _other_password}| PublicUser { id : other_id, username : other_username, email  : other_email }).zip(p).collect::<Vec<_>>();
+
+        Ok(data)
     });
 
     return result;
@@ -70,7 +86,7 @@ pub fn create_user(Json(payload): Json<NewUser>) -> Result<PublicUser, diesel::r
             let post = users
             .order(users::id.desc())
             .select(PublicUser::as_select())
-            .first(connection)?;
+            .get_result(connection)?;
 
             Ok(post)
     }); 
@@ -99,7 +115,7 @@ pub fn update_user(Json(payload): Json<UpdateUser>) -> Result<PublicUser, diesel
             let post = users
             .find(payload.id)
             .select(PublicUser::as_select())
-            .first(connection)?;
+            .get_result(connection)?;
 
         Ok(post)
     });

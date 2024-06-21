@@ -8,7 +8,7 @@ use crate::repository::users;
 use crate::models::users::{NewUser, UpdateUser, PublicUser};
 use crate::models::posts::Post;
 
-pub async fn show_users() -> Result<Json<Vec<(PublicUser, Post)>>, Json<crate::errors::ErrorResponse>> {
+pub async fn show_users() -> Result<Json<Vec<(PublicUser, Vec<Post>)>>, Json<crate::errors::ErrorResponse>> {
     let result: Result<_, _> = users::get_all_users();
 
     match result {
@@ -29,7 +29,7 @@ pub async fn show_users() -> Result<Json<Vec<(PublicUser, Post)>>, Json<crate::e
     }
 }
 
-pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<Vec<(PublicUser, Post)>>, Json<crate::errors::ErrorResponse>> {
+pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<Vec<(PublicUser, Vec<Post>)>>, Json<crate::errors::ErrorResponse>> {
     let result = users::get_one_user(Path(id));
 
     match result {

@@ -36,8 +36,9 @@ pub fn get_one_post(Path(other_id): Path<i32>) -> Result<(Post, PublicUser), die
             let post = posts::table
             .find(other_id)
             .inner_join(users::table.on(posts::user_id.eq(users::id)))
+            //.group_by(users::id)
             .select((Post::as_select(), (PublicUser::as_select())))
-            .first::<(Post, PublicUser)>(connection)?;
+            .get_result::<(Post, PublicUser)>(connection)?;
 
         Ok(post)
     });
@@ -63,7 +64,7 @@ pub fn create_post(Json(payload): Json<NewPost>) -> Result<Post, diesel::result:
             let post = posts::table
             .order(posts::id.desc())
             .select(Post::as_select())
-            .first(connection)?;
+            .get_result(connection)?;
 
             Ok(post)
     }); 
@@ -92,7 +93,7 @@ pub fn update_post(Json(payload): Json<UpdatePost>) -> Result<Post, diesel::resu
             let post = posts::table
             .find(payload.id)
             .select(Post::as_select())
-            .first(connection)?;
+            .get_result(connection)?;
 
         Ok(post)
     });
