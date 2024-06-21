@@ -2,24 +2,26 @@ use crate::models::posts::{NewPost, Post, UpdatePost};
 use crate::schema::posts;
 use crate::schema::posts::dsl::*;
 use crate::database;
+use crate::schema::users;
+use crate::models::users::PublicUser;
+
 use diesel::prelude::*;
 use diesel::result::Error;
-
 use axum::{
     Json,
     extract::Path
 };
 
-pub fn get_all_posts() -> Result<Vec<Post>, diesel::result::Error> {
+pub fn get_all_posts() -> Result<Vec<(Post, PublicUser)>, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<Vec<Post>, Error> = connection.transaction(|connection| {
+    let result: Result<Vec<(Post, PublicUser)>, Error> = connection.transaction(|connection| {
         let posts_vector = posts::table
         .order(posts::id.asc())
-        //.filter(published.eq(true))
+        .inner_join(users::table.on(posts::user_id.eq(users::id)))
         .limit(5)
-        .select(Post::as_select())
-        .get_results(connection)?;
+        .select((Post::as_select(), (PublicUser::as_select())))
+        .get_results::<(Post, PublicUser)>(connection)?;
 
         Ok(posts_vector)
     });
@@ -27,14 +29,15 @@ pub fn get_all_posts() -> Result<Vec<Post>, diesel::result::Error> {
     return result;
 }
 
-pub fn get_one_post(Path(other_id): Path<i32>) -> Result<Post, diesel::result::Error> {
+pub fn get_one_post(Path(other_id): Path<i32>) -> Result<(Post, PublicUser), diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<Post, Error> = connection.transaction(|connection| {
+    let result: Result<(Post, PublicUser), Error> = connection.transaction(|connection| {
             let post = posts::table
             .find(other_id)
-            .select(Post::as_select())
-            .first(connection)?;
+            .inner_join(users::table.on(posts::user_id.eq(users::id)))
+            .select((Post::as_select(), (PublicUser::as_select())))
+            .first::<(Post, PublicUser)>(connection)?;
 
         Ok(post)
     });

@@ -6,8 +6,9 @@ use axum::{
 use crate::errors::error;
 use crate::repository::post;
 use crate::models::posts::{NewPost, Post, UpdatePost};
+use crate::models::users::PublicUser;
 
-pub async fn show_posts() -> Result<Json<Vec<Post>>, Json<crate::errors::ErrorResponse>> {
+pub async fn show_posts() -> Result<Json<Vec<(Post, PublicUser)>>, Json<crate::errors::ErrorResponse>> {
 
     let result = post::get_all_posts();
 
@@ -29,7 +30,7 @@ pub async fn show_posts() -> Result<Json<Vec<Post>>, Json<crate::errors::ErrorRe
     }
 }
 
-pub async fn get_one_post(Path(id): Path<i32>) -> Result<Json<Post>, Json<crate::errors::ErrorResponse>> {
+pub async fn get_one_post(Path(id): Path<i32>) -> Result<Json<(Post, PublicUser)>, Json<crate::errors::ErrorResponse>> {
 
     let result = post::get_one_post(Path(id));
 

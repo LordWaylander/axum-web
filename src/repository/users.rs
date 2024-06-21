@@ -1,7 +1,12 @@
-use crate::models::users::{NewUser, UpdateUser, PublicUser};
-use bcrypt::{hash, DEFAULT_COST};
 use crate::schema::users::dsl::*;
+use crate::schema::users;
+use crate::models::users::{NewUser, UpdateUser, PublicUser};
+use crate::schema::posts;
+use crate::models::posts::Post;
+
 use crate::database;
+
+use bcrypt::{hash, DEFAULT_COST};
 use diesel::prelude::*;
 use diesel::result::Error;
 use axum::{
@@ -9,16 +14,16 @@ use axum::{
     extract::Path
 };
 
-pub fn get_all_users() -> Result<Vec<PublicUser>, diesel::result::Error> {
+pub fn get_all_users() -> Result<Vec<(PublicUser, Post)>, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<Vec<PublicUser>, Error> = connection.transaction(|connection| {
+    let result: Result<Vec<(PublicUser, Post)>, Error> = connection.transaction(|connection| {
         let users_vector = users
-        .order(id.asc())
-        //.filter(published.eq(true))
+        .order(users::id.asc())
+        .inner_join(posts::table.on(posts::id.eq(posts::user_id)))
         .limit(5)
-        .select(PublicUser::as_select())
-        .get_results(connection)?;
+        .select((PublicUser::as_select(), Post::as_select()))
+        .get_results::<(PublicUser, Post)>(connection)?;
 
         Ok(users_vector)
     });
@@ -26,15 +31,19 @@ pub fn get_all_users() -> Result<Vec<PublicUser>, diesel::result::Error> {
     return result;
 }
 
-pub fn get_one_user(Path(other_id): Path<i32>) -> Result<PublicUser, diesel::result::Error> {
+pub fn get_one_user(Path(other_id): Path<i32>) -> Result<Vec<(PublicUser, Post)>, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<PublicUser, Error> = connection.transaction(|connection| {
-            let user = users
-            .find(other_id)
-            .select(PublicUser::as_select())
-            .first(connection)?;
+    let result: Result<Vec<(PublicUser, Post)>, Error> = connection.transaction(|connection| {
 
+        let user = users
+        .find(other_id)
+        .inner_join(posts::table.on(users::id.eq(posts::user_id)))
+        .select((PublicUser::as_select(), Post::as_select()))
+        .load::<(PublicUser, Post)>(connection)?;
+
+        println!("{:?}",user );
+            
         Ok(user)
     });
 
@@ -59,7 +68,7 @@ pub fn create_user(Json(payload): Json<NewUser>) -> Result<PublicUser, diesel::r
             .execute(connection)?;
 
             let post = users
-            .order(id.desc())
+            .order(users::id.desc())
             .select(PublicUser::as_select())
             .first(connection)?;
 
@@ -110,7 +119,7 @@ pub fn delete_user(Path(other_id): Path<i32>) -> Result<PublicUser, diesel::resu
         .get_result(connection)?;
 
         diesel::delete(users)
-        .filter(id.eq(&other_id))
+        .filter(users::id.eq(&other_id))
         .execute(connection)?;
         
         Ok(post)

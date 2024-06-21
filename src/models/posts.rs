@@ -2,7 +2,7 @@ use crate::schema::posts;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Queryable, Selectable)]
+#[derive(Identifiable, Queryable, PartialEq, Debug, Selectable)]
 #[diesel(table_name = posts)]
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 #[derive(Serialize, Deserialize)]
