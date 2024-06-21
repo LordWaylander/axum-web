@@ -56,9 +56,9 @@ pub async fn create_post(Json(payload): Json<NewPost>) -> Result<Json<Post>, Jso
     }
 }
 
-pub async fn update_post(Json(payload): Json<UpdatePost>) -> Result<Json<Post>, Json<crate::errors::ErrorResponse>> {
+pub async fn update_post(Path(id): Path<i32>,Json(payload): Json<UpdatePost>) -> Result<Json<Post>, Json<crate::errors::ErrorResponse>> {
 
-    let result = post::update_post(Json(payload));
+    let result = post::update_post(Path(id), Json(payload));
 
     match result {
         Ok(post) => Ok(Json(post)),

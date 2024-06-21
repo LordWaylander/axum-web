@@ -32,7 +32,6 @@ pub struct NewPost {
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 #[derive(Serialize, Deserialize)]
 pub struct UpdatePost {
-    pub id: i32,
     pub title: Option<String>,
     pub body: Option<String>,
     pub published : Option<bool>,

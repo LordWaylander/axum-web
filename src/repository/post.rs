@@ -72,26 +72,23 @@ pub fn create_post(Json(payload): Json<NewPost>) -> Result<Post, diesel::result:
     return result;
 }
 
-pub fn update_post(Json(payload): Json<UpdatePost>) -> Result<Post, diesel::result::Error> {
+pub fn update_post(Path(other_id): Path<i32>, Json(payload): Json<UpdatePost>) -> Result<Post, diesel::result::Error> {
     let connection = &mut database::establish_connection();
-
-    println!("{:?}", payload.published);
 
     let result: Result<Post, Error> = connection.transaction(|connection| {
 
         let update_post = UpdatePost {
-            id: payload.id,
             title: payload.title,
             body: payload.body,
             published: payload.published,
         };
 
-        diesel::update(posts::table.find(payload.id))
+        diesel::update(posts::table.find(other_id))
             .set(&update_post)
             .execute(connection)?;
 
             let post = posts::table
-            .find(payload.id)
+            .find(other_id)
             .select(Post::as_select())
             .get_result(connection)?;
 

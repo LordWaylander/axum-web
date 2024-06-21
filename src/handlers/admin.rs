@@ -53,9 +53,9 @@ pub async fn create_user(Json(payload): Json<NewUser>) -> Result<Json<User>, Jso
     }
 }
 
-pub async fn update_user(Json(payload): Json<UpdateUser>) -> Result<Json<User>, Json<crate::errors::ErrorResponse>> {
+pub async fn update_user(Path(id): Path<i32>, Json(payload): Json<UpdateUser>) -> Result<Json<User>, Json<crate::errors::ErrorResponse>> {
 
-    let result = users::update_user(Json(payload));
+    let result = users::update_user(Path(id), Json(payload));
 
     match result {
         Ok(user) => Ok(Json(user)),

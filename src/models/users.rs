@@ -28,7 +28,6 @@ pub struct NewUser {
 #[diesel(check_for_backend(diesel::mysql::Mysql))]
 #[derive(Serialize, Deserialize)]
 pub struct UpdateUser {
-    pub id: i32,
     pub username: Option<String>,
     pub email: Option<String>,
     pub password: Option<String>,

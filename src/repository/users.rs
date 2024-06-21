@@ -85,26 +85,25 @@ pub fn create_user(Json(payload): Json<NewUser>) -> Result<User, diesel::result:
     return result;
 }
 
-pub fn update_user(Json(payload): Json<UpdateUser>) -> Result<User, diesel::result::Error> {
+pub fn update_user(Path(other_id): Path<i32>, Json(payload): Json<UpdateUser>) -> Result<User, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
     let result: Result<User, Error> = connection.transaction(|connection| {
 
         let hashed_password = payload.password.map(|pwd| hash_password(pwd));
 
-        let update_post = UpdateUser {
-            id: payload.id,
+        let update_user = UpdateUser {
             username: payload.username,
             email: payload.email,
             password: hashed_password,
         };
 
-        diesel::update(users.find(payload.id))
-            .set(&update_post)
+        diesel::update(users.find(other_id))
+            .set(&update_user)
             .execute(connection)?;
 
             let post = users
-            .find(payload.id)
+            .find(other_id)
             .select(User::as_select())
             .get_result(connection)?;
 
