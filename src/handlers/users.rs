@@ -4,12 +4,12 @@ use axum::{
     extract::Path
 };
 use crate::errors::error;
-use crate::repository::users;
+use crate::repository::users as RepositoryUsers;
 use crate::models::users::{NewUser, UpdateUser, User};
 use crate::models::posts::Post;
 
 pub async fn show_users() -> Result<Json<Vec<(User, Vec<Post>)>>, Json<crate::errors::ErrorResponse>> {
-    let result: Result<_, _> = users::get_all_users();
+    let result: Result<_, _> = RepositoryUsers::get_all_users();
 
     match result {
         Ok(users) => {
@@ -30,7 +30,7 @@ pub async fn show_users() -> Result<Json<Vec<(User, Vec<Post>)>>, Json<crate::er
 }
 
 pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<Vec<(User, Vec<Post>)>>, Json<crate::errors::ErrorResponse>> {
-    let result = users::get_one_user(Path(id));
+    let result = RepositoryUsers::get_one_user(Path(id));
 
     match result {
         Ok(user) => Ok(Json(user)),
@@ -42,7 +42,7 @@ pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<Vec<(User, Vec<Pos
 }
 
 pub async fn create_user(Json(payload): Json<NewUser>) -> Result<Json<User>, Json<crate::errors::ErrorResponse>> {
-    let result = users::create_user(Json(payload));
+    let result = RepositoryUsers::create_user(Json(payload));
 
     match result {
         Ok(user) => Ok(Json(user)),
@@ -55,7 +55,7 @@ pub async fn create_user(Json(payload): Json<NewUser>) -> Result<Json<User>, Jso
 
 pub async fn update_user(Path(id): Path<i32>, Json(payload): Json<UpdateUser>) -> Result<Json<User>, Json<crate::errors::ErrorResponse>> {
 
-    let result = users::update_user(Path(id), Json(payload));
+    let result = RepositoryUsers::update_user(Path(id), Json(payload));
 
     match result {
         Ok(user) => Ok(Json(user)),
@@ -67,7 +67,7 @@ pub async fn update_user(Path(id): Path<i32>, Json(payload): Json<UpdateUser>) -
 }
 
 pub async fn delete_user(Path(id): Path<i32>) -> Result<Json<String>, Json<crate::errors::ErrorResponse>> {
-    let result = users::delete_user(Path(id));
+    let result = RepositoryUsers::delete_user(Path(id));
 
     match result {
         Ok(user) => {

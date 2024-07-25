@@ -4,13 +4,13 @@ use axum::{
     extract::Path
 };
 use crate::errors::error;
-use crate::repository::post;
+use crate::repository::post as RepositoryPost;
 use crate::models::posts::{NewPost, Post, UpdatePost};
 use crate::models::users::User;
 
 pub async fn show_posts() -> Result<Json<Vec<(Post, User)>>, Json<crate::errors::ErrorResponse>> {
 
-    let result = post::get_all_posts();
+    let result = RepositoryPost::get_all_posts();
 
     match result {
         Ok(post) => {
@@ -32,7 +32,7 @@ pub async fn show_posts() -> Result<Json<Vec<(Post, User)>>, Json<crate::errors:
 
 pub async fn get_one_post(Path(id): Path<i32>) -> Result<Json<(Post, User)>, Json<crate::errors::ErrorResponse>> {
 
-    let result = post::get_one_post(Path(id));
+    let result = RepositoryPost::get_one_post(Path(id));
 
     match result {
         Ok(post) => Ok(Json(post)),
@@ -45,7 +45,7 @@ pub async fn get_one_post(Path(id): Path<i32>) -> Result<Json<(Post, User)>, Jso
 
 pub async fn create_post(Json(payload): Json<NewPost>) -> Result<Json<Post>, Json<crate::errors::ErrorResponse>> {
 
-    let result = post::create_post(Json(payload));
+    let result = RepositoryPost::create_post(Json(payload));
 
     match result {
         Ok(post) => Ok(Json(post)),
@@ -58,7 +58,7 @@ pub async fn create_post(Json(payload): Json<NewPost>) -> Result<Json<Post>, Jso
 
 pub async fn update_post(Path(id): Path<i32>,Json(payload): Json<UpdatePost>) -> Result<Json<Post>, Json<crate::errors::ErrorResponse>> {
 
-    let result = post::update_post(Path(id), Json(payload));
+    let result = RepositoryPost::update_post(Path(id), Json(payload));
 
     match result {
         Ok(post) => Ok(Json(post)),
@@ -71,7 +71,7 @@ pub async fn update_post(Path(id): Path<i32>,Json(payload): Json<UpdatePost>) ->
 
 pub async fn delete_post(Path(id): Path<i32>) -> Result<Json<String>, Json<crate::errors::ErrorResponse>> {
 
-    let result = post::delete_post(Path(id));
+    let result = RepositoryPost::delete_post(Path(id));
 
     match result {
         Ok(post) => {
