@@ -19,7 +19,6 @@ pub fn get_all_posts() -> Result<Vec<(Post, User)>, diesel::result::Error> {
         let posts_vector = posts::table
         .order(posts::id.asc())
         .inner_join(users::table.on(posts::user_id.eq(users::id)))
-        .limit(5)
         .select((Post::as_select(), (User::as_select())))
         .get_results::<(Post, User)>(connection)?;
 
@@ -58,15 +57,15 @@ pub fn create_post(Json(payload): Json<NewPost>) -> Result<Post, diesel::result:
 
     let result: Result<Post, Error> = connection.transaction(|connection| {
         diesel::insert_into(posts::table)
-            .values(&new_post)
-            .execute(connection)?;
+        .values(&new_post)
+        .execute(connection)?;
 
-            let post = posts::table
-            .order(posts::id.desc())
-            .select(Post::as_select())
-            .get_result(connection)?;
+        let post = posts::table
+        .order(posts::id.desc())
+        .select(Post::as_select())
+        .get_result(connection)?;
 
-            Ok(post)
+        Ok(post)
     }); 
 
     return result;

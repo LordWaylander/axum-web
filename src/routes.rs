@@ -12,6 +12,7 @@ pub fn init() -> Router {
     .merge(users::init_users_routes())
     .merge(posts::init_api_routes());
 
+    //middleware pour tous
     app = app.layer(middleware::from_fn(redirect::check_if_redirect_to));
 
     return app;

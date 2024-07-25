@@ -14,7 +14,7 @@ mod repository;
 async fn main() {
     check_env();
     
-    let address = env::var("ADDRESS").expect("ADDRESS must be set");
+    let address = env::var("ADDRESS").unwrap();
 
     //tracing_subscriber::fmt::init();
     let app = routes::init();
