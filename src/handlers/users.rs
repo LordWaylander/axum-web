@@ -8,6 +8,7 @@ use crate::repository::users as RepositoryUsers;
 use crate::models::users::{NewUser, UpdateUser, User};
 use crate::models::posts::Post;
 use crate::errors::ErrorResponse;
+use bcrypt::{hash, DEFAULT_COST};
 
 pub async fn show_users() -> Result<Json<Vec<(User, Vec<Post>)>>, Json<ErrorResponse>> {
     let result: Result<_, _> = RepositoryUsers::get_all_users();
@@ -33,6 +34,7 @@ pub async fn show_users() -> Result<Json<Vec<(User, Vec<Post>)>>, Json<ErrorResp
 pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<Vec<(User, Vec<Post>)>>, Json<ErrorResponse>> {
     let result = RepositoryUsers::get_one_user(Path(id));
 
+    // problème format retour  [ [{}[{}{}]] ] || [ [{}[{}{}]], [{}[{}{}]] ]
     match result {
         Ok(user) => Ok(Json(user)),
         Err(e) => {
@@ -42,11 +44,15 @@ pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<Vec<(User, Vec<Pos
     }
 }
 
-pub async fn create_user(Json(payload): Json<NewUser>) -> Result<Json<User>, Json<ErrorResponse>> {
-    /*
-     * destructuring payload, hash pwd et pas envoyé en clair (update_user)
-     */
-    let result = RepositoryUsers::create_user(Json(payload));
+pub async fn create_user(payload: Json<NewUser>) -> Result<Json<User>, Json<ErrorResponse>> {
+
+    let user = NewUser {
+        username: payload.username.clone(),
+        email: payload.email.clone(),
+        password: hash_password(payload.password.clone()),
+    };
+
+    let result = RepositoryUsers::create_user(Json(user));
 
     match result {
         Ok(user) => Ok(Json(user)),
@@ -57,12 +63,16 @@ pub async fn create_user(Json(payload): Json<NewUser>) -> Result<Json<User>, Jso
     }
 }
 
-pub async fn update_user(Path(id): Path<i32>, Json(payload): Json<UpdateUser>) -> Result<Json<User>, Json<ErrorResponse>> {
+pub async fn update_user(Path(id): Path<i32>, payload: Json<UpdateUser>) -> Result<Json<User>, Json<ErrorResponse>> {
 
-    /*
-     * destructuring payload, hash pwd et pas envoyé en clair (create_user)
-     */
-    let result = RepositoryUsers::update_user(Path(id), Json(payload));
+    let user: UpdateUser = UpdateUser {
+        username: payload.username.clone(),
+        email: payload.email.clone(),
+        password: payload.password.clone().map(|pwd| hash_password(pwd)),
+    };
+
+
+    let result = RepositoryUsers::update_user(Path(id), Json(user));
 
     match result {
         Ok(user) => Ok(Json(user)),
@@ -85,4 +95,8 @@ pub async fn delete_user(Path(id): Path<i32>) -> Result<Json<String>, Json<Error
             Err(Json(err))
         },
     }
+}
+
+fn hash_password(pwd: String) -> String {
+    hash(pwd, DEFAULT_COST).expect("Error hashing password")
 }

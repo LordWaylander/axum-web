@@ -5,7 +5,6 @@ use crate::models::posts::Post;
 
 use crate::database;
 
-use bcrypt::{hash, DEFAULT_COST};
 use diesel::prelude::*;
 use diesel::result::Error;
 use axum::{
@@ -41,7 +40,12 @@ pub fn get_one_user(Path(other_id): Path<i32>) -> Result<Vec<(User, Vec<Post>)>,
             .load::<Post>(connection)?
             .grouped_by(&u);
 
-        let data = u.into_iter().zip(p).collect::<Vec<_>>();
+        //let data: Vec<(User, Vec<Post>)> = u.into_iter().zip(p).collect();
+
+        let data: Vec<(User, Vec<Post>)> = std::iter::zip(
+            u.into_iter(),
+            p.into_iter(),
+        ).collect();
 
         Ok(data)
     });
@@ -54,19 +58,16 @@ pub fn create_user(Json(payload): Json<NewUser>) -> Result<User, diesel::result:
 
     let result: Result<User, Error> = connection.transaction(|connection| {
 
-        let hashed_password = hash_password(payload.password);
-
         let new_user = NewUser { 
             username : payload.username, 
             email : payload.email, 
-            password: hashed_password,
+            password: payload.password,
         };
 
         diesel::insert_into(users)
             .values(&new_user)
             .execute(connection)?;
 
-            //get_one_user
             let user = users
             .order(users::id.desc())
             .select(User::as_select())
@@ -83,12 +84,10 @@ pub fn update_user(Path(other_id): Path<i32>, Json(payload): Json<UpdateUser>) -
 
     let result: Result<User, Error> = connection.transaction(|connection| {
 
-        let hashed_password = payload.password.map(|pwd| hash_password(pwd));
-
         let update_user = UpdateUser {
             username: payload.username,
             email: payload.email,
-            password: hashed_password,
+            password: payload.password,
         };
 
         diesel::update(users.find(other_id))
@@ -112,7 +111,9 @@ pub fn delete_user(Path(other_id): Path<i32>) -> Result<User, diesel::result::Er
 
     let result: Result<User, Error> = connection.transaction(|connection| {
 
-        //get_one_user
+        /*
+        * Delete la relation avec le post
+        */
         let user = users
         .find(&other_id)
         .select(User::as_select())
@@ -126,9 +127,4 @@ pub fn delete_user(Path(other_id): Path<i32>) -> Result<User, diesel::result::Er
     });
 
     return result;
-}
-
-//rien a faire ici -> handlers
-fn hash_password(pwd: String) -> String {
-    hash(pwd, DEFAULT_COST).expect("Error hashing password")
 }
