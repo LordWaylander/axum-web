@@ -1,7 +1,7 @@
 use axum::{
     http::StatusCode,
     Json,
-    extract::Path
+    extract::Path,
 };
 use crate::errors::error;
 use crate::repository::users as RepositoryUsers;
@@ -31,12 +31,13 @@ pub async fn show_users() -> Result<Json<Vec<(User, Vec<Post>)>>, Json<ErrorResp
     }
 }
 
-pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<Vec<(User, Vec<Post>)>>, Json<ErrorResponse>> {
+pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<(User, Vec<Post>)>, Json<ErrorResponse>> {
     let result = RepositoryUsers::get_one_user(Path(id));
 
-    // problème format retour  [ [{}[{}{}]] ] || [ [{}[{}{}]], [{}[{}{}]] ]
     match result {
-        Ok(user) => Ok(Json(user)),
+        Ok(user) => {          
+            Ok(Json(user))
+        },
         Err(e) => {
             let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
             Err(Json(err))

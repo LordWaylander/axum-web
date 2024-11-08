@@ -1,5 +1,5 @@
 use crate::schema::users::dsl::*;
-use crate::schema::users;
+use crate::schema::{posts, users};
 use crate::models::users::{NewUser, UpdateUser, User};
 use crate::models::posts::Post;
 
@@ -30,22 +30,18 @@ pub fn get_all_users() -> Result<Vec<(User, Vec<Post>)>, diesel::result::Error> 
     return result;
 }
 
-pub fn get_one_user(Path(other_id): Path<i32>) -> Result<Vec<(User, Vec<Post>)>, diesel::result::Error> {
+pub fn get_one_user(Path(other_id): Path<i32>) -> Result<(User, Vec<Post>), diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
-    let result: Result<Vec<(User, Vec<Post>)>, Error> = connection.transaction(|connection| {
+    let result: Result<(User, Vec<Post>), Error> = connection.transaction(|connection| {
 
-        let u = users.find(other_id).select(User::as_select()).load::<User>(connection)?;
-        let p = Post::belonging_to(&u)
-            .load::<Post>(connection)?
-            .grouped_by(&u);
+        let u: User = users.find(other_id).select(User::as_select()).first::<User>(connection).unwrap();
+        let p = posts::table.filter(posts::user_id.eq(other_id)).load::<Post>(connection)?;
 
-        //let data: Vec<(User, Vec<Post>)> = u.into_iter().zip(p).collect();
-
-        let data: Vec<(User, Vec<Post>)> = std::iter::zip(
-            u.into_iter(),
-            p.into_iter(),
-        ).collect();
+        let data: (User, Vec<Post>) = (
+            u,
+            p
+        );
 
         Ok(data)
     });
