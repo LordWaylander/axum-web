@@ -34,3 +34,22 @@ pub struct UpdateUser {
     pub password: Option<String>,
     pub roles: Option<String>,
 }
+
+#[derive(Deserialize)]
+#[derive(Debug)]
+pub struct SignInData {
+    pub email: String,
+    pub password: String, 
+}
+
+#[derive(Identifiable, Queryable, PartialEq, Debug, Selectable)]
+#[diesel(table_name = users)]
+#[diesel(check_for_backend(diesel::mysql::Mysql))]
+#[derive(Serialize, Deserialize)]
+pub struct UserLogin {
+    pub id: i32,
+    pub username: String,
+    pub email: String,
+    pub password: String, 
+    pub roles: String,
+}

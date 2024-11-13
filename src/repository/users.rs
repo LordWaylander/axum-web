@@ -1,12 +1,23 @@
 use crate::schema::users::dsl::*;
 use crate::schema::{posts, users};
-use crate::models::users::{NewUser, UpdateUser, User};
+use crate::models::users::{NewUser, UpdateUser, User, UserLogin};
 use crate::models::posts::Post;
 
 use crate::database;
 
 use diesel::prelude::*;
 use diesel::result::Error;
+
+pub fn get_user_by_email(other_email: String) -> Result<Option<UserLogin>, diesel::result::Error> {
+    let connection = &mut database::establish_connection();
+
+    let result = connection.transaction(|connection| {
+        let user = users.filter(users::email.eq(other_email)).select(UserLogin::as_select()).first::<UserLogin>(connection).optional();
+        user
+    });
+
+    return result;
+}
 
 pub fn get_all_users() -> Result<Vec<(User, Vec<Post>)>, diesel::result::Error> {
     let connection = &mut database::establish_connection();

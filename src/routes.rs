@@ -6,11 +6,14 @@ use crate::middlewares::*;
 
 pub mod posts;
 pub mod users;
+pub mod auth;
 
 pub fn init() -> Router {
     let mut app = Router::new()
     .merge(users::init_users_routes())
-    .merge(posts::init_api_routes());
+    .merge(posts::init_api_routes())
+    .merge(auth::init_auth_routes());
+
 
     //middleware pour tous
     app = app.layer(middleware::from_fn(redirect::check_if_redirect_to));

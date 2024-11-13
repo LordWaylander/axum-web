@@ -1,4 +1,5 @@
 use axum;
+use tokio::net::TcpListener;
 use std::env;
 use dotenvy::dotenv;
 mod routes;
@@ -16,18 +17,22 @@ async fn main() {
     
     let address = env::var("ADDRESS").unwrap();
 
-    //tracing_subscriber::fmt::init();
     let app = routes::init();
 
-    let listener = tokio::net::TcpListener::bind(address)
+    let listener = TcpListener::bind(address)
         .await
-        .unwrap();
-    tracing::debug!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
+        .expect("Unable to connect to the server");
+
+    println!("Listening on {}", listener.local_addr().unwrap() );
+
+    axum::serve(listener, app)
+        .await
+        .expect("Error serving application");
 }
 
 fn check_env() {
     dotenv().ok();
     env::var("ADDRESS").expect("ADDRESS must be set");
     env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    env::var("SECRET_KEY").expect("SECRET_KEY must be set");
 }
