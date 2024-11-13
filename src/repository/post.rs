@@ -7,10 +7,6 @@ use crate::models::users::User;
 
 use diesel::prelude::*;
 use diesel::result::Error;
-use axum::{
-    Json,
-    extract::Path
-};
 
 pub fn get_all_posts() -> Result<Vec<(Post, User)>, diesel::result::Error> {
     let connection = &mut database::establish_connection();
@@ -28,7 +24,7 @@ pub fn get_all_posts() -> Result<Vec<(Post, User)>, diesel::result::Error> {
     return result;
 }
 
-pub fn get_one_post(Path(other_id): Path<i32>) -> Result<(Post, User), diesel::result::Error> {
+pub fn get_one_post(other_id: i32) -> Result<(Post, User), diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
     let result: Result<(Post, User), Error> = connection.transaction(|connection| {
@@ -45,19 +41,12 @@ pub fn get_one_post(Path(other_id): Path<i32>) -> Result<(Post, User), diesel::r
     return result;
 }
 
-pub fn create_post(Json(payload): Json<NewPost>) -> Result<Post, diesel::result::Error> {
+pub fn create_post(payload: NewPost) -> Result<Post, diesel::result::Error> {
     let connection = &mut database::establish_connection();
-
-    let new_post = NewPost { 
-        title : payload.title, 
-        body : payload.body, 
-        published: Some(payload.published.unwrap_or(false)),
-        user_id: payload.user_id
-    };
 
     let result: Result<Post, Error> = connection.transaction(|connection| {
         diesel::insert_into(posts::table)
-        .values(&new_post)
+        .values(&payload)
         .execute(connection)?;
 
         let post = posts::table
@@ -71,19 +60,13 @@ pub fn create_post(Json(payload): Json<NewPost>) -> Result<Post, diesel::result:
     return result;
 }
 
-pub fn update_post(Path(other_id): Path<i32>, Json(payload): Json<UpdatePost>) -> Result<Post, diesel::result::Error> {
+pub fn update_post(other_id: i32, payload: UpdatePost) -> Result<Post, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
     let result: Result<Post, Error> = connection.transaction(|connection| {
 
-        let update_post = UpdatePost {
-            title: payload.title,
-            body: payload.body,
-            published: payload.published,
-        };
-
         diesel::update(posts::table.find(other_id))
-            .set(&update_post)
+            .set(&payload)
             .execute(connection)?;
 
             let post = posts::table
@@ -98,7 +81,7 @@ pub fn update_post(Path(other_id): Path<i32>, Json(payload): Json<UpdatePost>) -
 
 }
 
-pub fn delete_post(Path(other_id): Path<i32>) -> Result<Post, diesel::result::Error> {
+pub fn delete_post(other_id: i32) -> Result<Post, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
     let result: Result<Post, Error> = connection.transaction(|connection| {

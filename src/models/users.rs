@@ -10,6 +10,7 @@ pub struct User {
     pub id: i32,
     pub username: String,
     pub email: String,
+    pub roles: String,
 }
 
 #[derive(Insertable)]
@@ -20,6 +21,7 @@ pub struct NewUser {
     pub username: String,
     pub email: String,
     pub password: String,
+    pub roles: String,
 }
 
 #[derive(AsChangeset)]
@@ -30,4 +32,5 @@ pub struct UpdateUser {
     pub username: Option<String>,
     pub email: Option<String>,
     pub password: Option<String>,
+    pub roles: Option<String>,
 }

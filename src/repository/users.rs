@@ -7,10 +7,6 @@ use crate::database;
 
 use diesel::prelude::*;
 use diesel::result::Error;
-use axum::{
-    Json,
-    extract::Path
-};
 
 pub fn get_all_users() -> Result<Vec<(User, Vec<Post>)>, diesel::result::Error> {
     let connection = &mut database::establish_connection();
@@ -30,7 +26,7 @@ pub fn get_all_users() -> Result<Vec<(User, Vec<Post>)>, diesel::result::Error> 
     return result;
 }
 
-pub fn get_one_user(Path(other_id): Path<i32>) -> Result<(User, Vec<Post>), diesel::result::Error> {
+pub fn get_one_user(other_id: i32) -> Result<(User, Vec<Post>), diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
     let result: Result<(User, Vec<Post>), Error> = connection.transaction(|connection| {
@@ -49,19 +45,13 @@ pub fn get_one_user(Path(other_id): Path<i32>) -> Result<(User, Vec<Post>), dies
     return result;
 }
 
-pub fn create_user(Json(payload): Json<NewUser>) -> Result<User, diesel::result::Error> {
+pub fn create_user(payload: NewUser) -> Result<User, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
     let result: Result<User, Error> = connection.transaction(|connection| {
 
-        let new_user = NewUser { 
-            username : payload.username, 
-            email : payload.email, 
-            password: payload.password,
-        };
-
         diesel::insert_into(users)
-            .values(&new_user)
+            .values(&payload)
             .execute(connection)?;
 
             let user = users
@@ -75,19 +65,13 @@ pub fn create_user(Json(payload): Json<NewUser>) -> Result<User, diesel::result:
     return result;
 }
 
-pub fn update_user(Path(other_id): Path<i32>, Json(payload): Json<UpdateUser>) -> Result<User, diesel::result::Error> {
+pub fn update_user(other_id: i32, payload: UpdateUser) -> Result<User, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
     let result: Result<User, Error> = connection.transaction(|connection| {
 
-        let update_user = UpdateUser {
-            username: payload.username,
-            email: payload.email,
-            password: payload.password,
-        };
-
         diesel::update(users.find(other_id))
-            .set(&update_user)
+            .set(&payload)
             .execute(connection)?;
 
             let user = users
@@ -102,7 +86,7 @@ pub fn update_user(Path(other_id): Path<i32>, Json(payload): Json<UpdateUser>) -
 
 }
 
-pub fn delete_user(Path(other_id): Path<i32>) -> Result<User, diesel::result::Error> {
+pub fn delete_user(other_id: i32) -> Result<User, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
     let result: Result<User, Error> = connection.transaction(|connection| {

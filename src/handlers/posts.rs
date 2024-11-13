@@ -33,7 +33,7 @@ pub async fn show_posts() -> Result<Json<Vec<(Post, User)>>, Json<ErrorResponse>
 
 pub async fn get_one_post(Path(id): Path<i32>) -> Result<Json<(Post, User)>, Json<ErrorResponse>> {
 
-    let result = RepositoryPost::get_one_post(Path(id));
+    let result = RepositoryPost::get_one_post(id);
 
     match result {
         Ok(post) => Ok(Json(post)),
@@ -46,7 +46,7 @@ pub async fn get_one_post(Path(id): Path<i32>) -> Result<Json<(Post, User)>, Jso
 
 pub async fn create_post(Json(payload): Json<NewPost>) -> Result<Json<Post>, Json<ErrorResponse>> {
 
-    let result = RepositoryPost::create_post(Json(payload));
+    let result = RepositoryPost::create_post(payload);
 
     match result {
         Ok(post) => Ok(Json(post)),
@@ -57,9 +57,9 @@ pub async fn create_post(Json(payload): Json<NewPost>) -> Result<Json<Post>, Jso
     }
 }
 
-pub async fn update_post(Path(id): Path<i32>,Json(payload): Json<UpdatePost>) -> Result<Json<Post>, Json<ErrorResponse>> {
+pub async fn update_post(Path(id): Path<i32>, Json(payload): Json<UpdatePost>) -> Result<Json<Post>, Json<ErrorResponse>> {
 
-    let result = RepositoryPost::update_post(Path(id), Json(payload));
+    let result = RepositoryPost::update_post(id, payload);
 
     match result {
         Ok(post) => Ok(Json(post)),
@@ -72,7 +72,7 @@ pub async fn update_post(Path(id): Path<i32>,Json(payload): Json<UpdatePost>) ->
 
 pub async fn delete_post(Path(id): Path<i32>) -> Result<Json<String>, Json<ErrorResponse>> {
 
-    let result = RepositoryPost::delete_post(Path(id));
+    let result = RepositoryPost::delete_post(id);
 
     match result {
         Ok(post) => {

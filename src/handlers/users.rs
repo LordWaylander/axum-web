@@ -32,7 +32,7 @@ pub async fn show_users() -> Result<Json<Vec<(User, Vec<Post>)>>, Json<ErrorResp
 }
 
 pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<(User, Vec<Post>)>, Json<ErrorResponse>> {
-    let result = RepositoryUsers::get_one_user(Path(id));
+    let result = RepositoryUsers::get_one_user(id);
 
     match result {
         Ok(user) => {          
@@ -51,9 +51,10 @@ pub async fn create_user(payload: Json<NewUser>) -> Result<Json<User>, Json<Erro
         username: payload.username.clone(),
         email: payload.email.clone(),
         password: hash_password(payload.password.clone()),
+        roles: payload.roles.clone()
     };
 
-    let result = RepositoryUsers::create_user(Json(user));
+    let result = RepositoryUsers::create_user(user);
 
     match result {
         Ok(user) => Ok(Json(user)),
@@ -70,10 +71,11 @@ pub async fn update_user(Path(id): Path<i32>, payload: Json<UpdateUser>) -> Resu
         username: payload.username.clone(),
         email: payload.email.clone(),
         password: payload.password.clone().map(|pwd| hash_password(pwd)),
+        roles: payload.roles.clone()
     };
 
 
-    let result = RepositoryUsers::update_user(Path(id), Json(user));
+    let result = RepositoryUsers::update_user(id, user);
 
     match result {
         Ok(user) => Ok(Json(user)),
@@ -85,7 +87,7 @@ pub async fn update_user(Path(id): Path<i32>, payload: Json<UpdateUser>) -> Resu
 }
 
 pub async fn delete_user(Path(id): Path<i32>) -> Result<Json<String>, Json<ErrorResponse>> {
-    let result = RepositoryUsers::delete_user(Path(id));
+    let result = RepositoryUsers::delete_user(id);
 
     match result {
         Ok(user) => {
