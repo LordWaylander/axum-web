@@ -1,4 +1,4 @@
 ##Todo :
-- ajout authentication
-- ajout middleware pour admin route + post posts
+- add middleware post posts
+- no redirection in middleware, but send an error message
 - tests unit / func

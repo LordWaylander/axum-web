@@ -7,7 +7,7 @@ use axum::{
 };
 use bcrypt::verify;
 use chrono::{Duration, Utc};
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebtoken::{encode, decode, EncodingKey, DecodingKey, Header, Validation, TokenData};
 use serde::{Deserialize, Serialize};
 
 use crate::models::users::SignInData;
@@ -16,27 +16,27 @@ use crate::errors::{error, ErrorResponse};
 use crate::models::users::UserLogin;
 use std::env;
 
-#[derive(Serialize, Deserialize)]
-// Define a structure for holding claims data used in JWT tokens
-pub struct Claims {
-    pub exp: usize,  // Expiry time of the token
-    pub iat: usize,  // Issued at time of the token
-    pub email: String,  // Email associated with the token
+#[derive(Deserialize, Serialize)]
+#[derive(Debug)]
+pub struct Token {
+    pub exp: usize,
+    pub iat: usize,
+    pub id: i32,
+    pub email: String, 
+    pub roles: String
 }
 
 pub async fn login(
     Json(payload): Json<SignInData>
-) -> Result<Json<String>, Json<ErrorResponse>> { //-> Result<Json<String>, Json<ErrorResponse>> {
+) -> Result<Json<String>, Json<ErrorResponse>> {
     let user: Result<UserLogin, Json<ErrorResponse>>  = retrieve_user_by_email(payload.email);
 
-    // verify password
     match user {
         Ok(user) => {
             let is_password_good = verify_password(payload.password.as_str(), user.password.as_str());
 
             match is_password_good {
                 Ok(_) => {
-                    // generate JWT Token
                     match encode_jwt(user) {
                         Ok(t) => {
                             Ok(Json(t.to_string()))
@@ -55,9 +55,6 @@ pub async fn login(
             Err(e)
         }
     }
-    
-
-    
 }
 
 fn retrieve_user_by_email(email: String) -> Result<UserLogin, Json<ErrorResponse>> {
@@ -78,7 +75,6 @@ fn retrieve_user_by_email(email: String) -> Result<UserLogin, Json<ErrorResponse
             Err(Json(err))
         }
     };
-
     user
 }
 
@@ -88,7 +84,7 @@ fn verify_password(password_payload: &str, password_hashed: &str) -> Result<bool
             if value {
                 Ok(true)
             } else {
-                let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), "user not found".to_string());
+                let err = error(StatusCode::UNAUTHORIZED.to_string(), "user not found".to_string());
                 Err(Json(err))
             }
         }
@@ -97,27 +93,16 @@ fn verify_password(password_payload: &str, password_hashed: &str) -> Result<bool
             Err(Json(err))
         }
     };
-
     is_password_good
 }
 
 fn encode_jwt(user: UserLogin) -> Result<String, Json<ErrorResponse>> {
-
-    #[derive(Serialize)]
-    struct Claims {
-        exp: usize,
-        iat: usize,
-        id: i32,
-        email: String, 
-        roles: String
-    }
-
     let secret: String = env::var("SECRET_KEY").unwrap().to_string();
     let now = Utc::now();
-    let expire: chrono::TimeDelta = Duration::hours(1);
+    let expire: chrono::TimeDelta = Duration::minutes(30);
     let exp: usize = (now + expire).timestamp() as usize;
     let iat: usize = now.timestamp() as usize;
-    let claim = Claims { iat, exp, id: user.id, email: user.email, roles: user.roles };
+    let claim = Token { iat, exp, id: user.id, email: user.email, roles: user.roles };
 
     let token = encode(
         &Header::default(),
@@ -134,5 +119,24 @@ fn encode_jwt(user: UserLogin) -> Result<String, Json<ErrorResponse>> {
             Err(Json(err))
         }
     }
+}
 
+pub fn decode_jwt(token: &str) -> Result<TokenData<Token>, Json<ErrorResponse>> {
+    let secret: String = env::var("SECRET_KEY").unwrap().to_string();
+
+    let token = decode::<Token>(
+        &token,
+        &DecodingKey::from_secret(secret.as_ref()),
+        &Validation::default()
+    );
+
+    match token {
+        Ok(t) => {
+            Ok(t)
+        }
+        Err(e) => {
+            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
+            Err(Json(err))
+        }
+    }
 }
