@@ -1,6 +1,3 @@
-// https://blog.logrocket.com/using-rust-axum-build-jwt-authentication-api/
-// https://www.shuttle.dev/blog/2024/02/21/using-jwt-auth-rust
-
 use axum::{
     extract::Json,
     http::StatusCode,
@@ -65,14 +62,14 @@ fn retrieve_user_by_email(email: String) -> Result<UserLogin, Json<ErrorResponse
                     Ok(u)
                 }
                 None => {
-                    let err = error(StatusCode::UNAUTHORIZED.to_string(), "user not found".to_string());
-                    Err(Json(err))
+                    let err = error(StatusCode::UNAUTHORIZED.to_string(), "Incorrect user or password".to_string());
+                    Err(err)
                 }
             }
         }
         Err(e) => {
             let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
-            Err(Json(err))
+            Err(err)
         }
     };
     user
@@ -84,13 +81,13 @@ fn verify_password(password_payload: &str, password_hashed: &str) -> Result<bool
             if value {
                 Ok(true)
             } else {
-                let err = error(StatusCode::UNAUTHORIZED.to_string(), "user not found".to_string());
-                Err(Json(err))
+                let err = error(StatusCode::UNAUTHORIZED.to_string(), "Incorrect user or password".to_string());
+                Err(err)
             }
         }
         Err(e) => {
             let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
-            Err(Json(err))
+            Err(err)
         }
     };
     is_password_good
@@ -112,11 +109,11 @@ fn encode_jwt(user: UserLogin) -> Result<String, Json<ErrorResponse>> {
 
     match token {
         Ok(t) => {
-            Ok(t)
+            Ok("Bearer ".to_string() + &t)
         }
         Err(e) => {
             let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
-            Err(Json(err))
+            Err(err)
         }
     }
 }
@@ -136,7 +133,7 @@ pub fn decode_jwt(token: &str) -> Result<TokenData<Token>, Json<ErrorResponse>> 
         }
         Err(e) => {
             let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
-            Err(Json(err))
+            Err(err)
         }
     }
 }

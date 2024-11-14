@@ -16,17 +16,15 @@ pub async fn show_posts() -> Result<Json<Vec<(Post, User)>>, Json<ErrorResponse>
     match result {
         Ok(post) => {
             if post.len() == 0 {
-                let msg: String = format!("No posts found");
-                let err: ErrorResponse = error(StatusCode::OK.to_string(),msg );
-                Err(Json(err))
+                let err = error(StatusCode::OK.to_string(),"No posts found".to_string());
+                Err(err)
             } else {
                 Ok(Json(post))
             }
-            
         },
         Err(e) => {
-            let err: ErrorResponse = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(),e.to_string() );
-            Err(Json(err))
+            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(),e.to_string() );
+            Err(err)
         },
     }
 }
@@ -39,7 +37,7 @@ pub async fn get_one_post(Path(id): Path<i32>) -> Result<Json<(Post, User)>, Jso
         Ok(post) => Ok(Json(post)),
         Err(e) => {
             let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
-            Err(Json(err))
+            Err(err)
         },
     }
 }
@@ -51,8 +49,8 @@ pub async fn create_post(Json(payload): Json<NewPost>) -> Result<Json<Post>, Jso
     match result {
         Ok(post) => Ok(Json(post)),
         Err(e) => {
-            let err: ErrorResponse = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(),e.to_string() );
-            Err(Json(err))
+            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(),e.to_string() );
+            Err(err)
         },
     }
 }
@@ -65,7 +63,7 @@ pub async fn update_post(Path(id): Path<i32>, Json(payload): Json<UpdatePost>) -
         Ok(post) => Ok(Json(post)),
         Err(e) => {
             let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
-            Err(Json(err))
+            Err(err)
         },
     }
 }
@@ -80,7 +78,7 @@ pub async fn delete_post(Path(id): Path<i32>) -> Result<Json<String>, Json<Error
         },
         Err(e) => {
             let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
-            Err(Json(err))
+            Err(err)
         },
     }
 }
