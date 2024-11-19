@@ -3,11 +3,10 @@ use axum::{
     Json,
     extract::Path
 };
-use crate::errors::error;
 use crate::repository::post as RepositoryPost;
 use crate::models::posts::{NewPost, Post, UpdatePost};
 use crate::models::users::User;
-use crate::errors::ErrorResponse;
+use crate::errors::{ErrorResponse, error};
 
 pub async fn show_posts() -> Result<Json<Vec<(Post, User)>>, Json<ErrorResponse>> {
 

@@ -9,6 +9,7 @@ use crate::errors::{error, ErrorResponse};
 
 pub mod is_admin;
 pub mod is_authenticate;
+pub mod is_proprietary_post;
 
 pub fn get_token_from_header(req: &Request) -> Result<TokenData<Token>, Json<ErrorResponse>> {
     let token_header = req.headers().get(http::header::AUTHORIZATION);

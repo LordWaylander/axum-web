@@ -3,11 +3,10 @@ use axum::{
     Json,
     extract::Path,
 };
-use crate::errors::error;
 use crate::repository::users as RepositoryUsers;
 use crate::models::users::{NewUser, UpdateUser, User};
 use crate::models::posts::Post;
-use crate::errors::ErrorResponse;
+use crate::errors::{ErrorResponse, error};
 use bcrypt::{hash, DEFAULT_COST};
 
 pub async fn show_users() -> Result<Json<Vec<(User, Vec<Post>)>>, Json<ErrorResponse>> {

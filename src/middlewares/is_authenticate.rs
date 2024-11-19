@@ -2,11 +2,10 @@ use axum:: {
     extract::Request,
     middleware::Next,
     response::Response,
-    Json,
-    http::StatusCode,
+    Json
 };
 use crate::middlewares::get_token_from_header;
-use crate::errors::{ErrorResponse, error};
+use crate::errors::ErrorResponse;
 
 pub async fn main(req: Request, next: Next) -> Result<Response, Json<ErrorResponse>>   {
 
