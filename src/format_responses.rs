@@ -1,6 +1,5 @@
 use serde::Serialize;
 use axum::{
-    Json,
     response::{IntoResponse, Response},
     http::StatusCode,
 };

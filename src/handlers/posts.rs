@@ -2,7 +2,6 @@ use axum::{
     http::StatusCode,
     Json,
     extract::Path,
-    response::{IntoResponse, Response},
 };
 use crate::repository::post as RepositoryPost;
 use crate::models::posts::{NewPost, Post, UpdatePost};

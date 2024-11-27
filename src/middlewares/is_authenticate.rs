@@ -2,7 +2,6 @@ use axum:: {
     extract::Request,
     middleware::Next,
     response::Response,
-    Json
 };
 use crate::middlewares::get_token_from_header;
 use crate::format_responses::ErrorResponse;

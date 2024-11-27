@@ -2,7 +2,6 @@ use axum:: {
     extract::Request,
     middleware::Next,
     response::Response,
-    Json,
     http::StatusCode,
 };
 use crate::middlewares::get_token_from_header;
