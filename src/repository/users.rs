@@ -29,7 +29,7 @@ pub fn get_all_users() -> Result<Vec<(User, Vec<Post>)>, diesel::result::Error> 
         .load::<Post>(connection)?
         .grouped_by(&u);
 
-        let data = u.into_iter().zip(p).collect::<Vec<_>>();
+        let data: Vec<(User, Vec<Post>)> = u.into_iter().zip(p).collect::<Vec<_>>();
 
         Ok(data)
     });

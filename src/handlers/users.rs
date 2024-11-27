@@ -6,44 +6,49 @@ use axum::{
 use crate::repository::users as RepositoryUsers;
 use crate::models::users::{NewUser, UpdateUser, User};
 use crate::models::posts::Post;
-use crate::errors::{ErrorResponse, error};
 use bcrypt::{hash, DEFAULT_COST};
+use crate::format_responses::{UserResponse, ErrorResponse};
 
-pub async fn show_users() -> Result<Json<Vec<(User, Vec<Post>)>>, Json<ErrorResponse>> {
+pub async fn show_users() -> Result<Json<Vec<UserResponse>>, ErrorResponse> {
     let result: Result<_, _> = RepositoryUsers::get_all_users();
 
     match result {
-        Ok(users) => {
-            if users.len() == 0 {
-                let err = error(StatusCode::OK.to_string(),"No users found".to_string() );
+        Ok(response) => {
+            if response.len() == 0 {
+                let err = ErrorResponse::error(StatusCode::OK.as_u16(), "No users found".to_string());
                 Err(err)
             } else {
-                Ok(Json(users))
+                let mut resp_json : Vec<UserResponse> = Vec::new();
+
+                for res in response {
+                    resp_json.push(UserResponse { user: res.0, post: res.1 })
+                }
+                Ok(Json(resp_json))
             }
             
         },
         Err(e) => {
-            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(),e.to_string() );
+            let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string() );
             Err(err)
         },
     }
 }
 
-pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<(User, Vec<Post>)>, Json<ErrorResponse>> {
-    let result = RepositoryUsers::get_one_user(id);
+pub async fn get_one_user(Path(id): Path<i32>) -> Result<Json<UserResponse>, ErrorResponse> {
+    let result: Result<(User, Vec<Post>), diesel::result::Error> = RepositoryUsers::get_one_user(id);
 
     match result {
-        Ok(user) => {          
-            Ok(Json(user))
+        Ok(response) => {   
+            Ok(Json(UserResponse { user: response.0, post: response.1 }))       
         },
         Err(e) => {
-            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
+            let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
             Err(err)
         },
     }
 }
 
-pub async fn create_user(payload: Json<NewUser>) -> Result<Json<User>, Json<ErrorResponse>> {
+pub async fn create_user(payload: Json<NewUser>) -> Result<Json<User>, ErrorResponse> {
 
     let user = NewUser {
         username: payload.username.clone(),
@@ -55,15 +60,15 @@ pub async fn create_user(payload: Json<NewUser>) -> Result<Json<User>, Json<Erro
     let result = RepositoryUsers::create_user(user);
 
     match result {
-        Ok(user) => Ok(Json(user)),
+        Ok(user) => Ok(Json(user)), //pas mieux de retourner un status 200, avec message " user bien créé " ?
         Err(e) => {
-            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(),e.to_string() );
+            let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(),e.to_string() );
             Err(err)
         },
     }
 }
 
-pub async fn update_user(Path(id): Path<i32>, payload: Json<UpdateUser>) -> Result<Json<User>, Json<ErrorResponse>> {
+pub async fn update_user(Path(id): Path<i32>, payload: Json<UpdateUser>) -> Result<Json<User>, ErrorResponse> {
 
     let user: UpdateUser = UpdateUser {
         username: payload.username.clone(),
@@ -76,23 +81,23 @@ pub async fn update_user(Path(id): Path<i32>, payload: Json<UpdateUser>) -> Resu
     let result = RepositoryUsers::update_user(id, user);
 
     match result {
-        Ok(user) => Ok(Json(user)),
+        Ok(user) => Ok(Json(user)),//pas mieux de retourner un status 200, avec message " user bien modifié " ?
         Err(e) => {
-            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
+            let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
             Err(err)
         },
     }
 }
 
-pub async fn delete_user(Path(id): Path<i32>) -> Result<Json<String>, Json<ErrorResponse>> {
+pub async fn delete_user(Path(id): Path<i32>) -> Result<Json<String>, ErrorResponse> {
     let result = RepositoryUsers::delete_user(id);
 
     match result {
         Ok(user) => {
-            Ok(Json(format!("L'utilisateur : {}, ID : {}, est bien supprimé", user.username, user.id)))
+            Ok(Json(format!("user : {}, ID : {}, has been deleted", user.username, user.id)))
         },
         Err(e) => {
-            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
+            let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
             Err(err)
         },
     }

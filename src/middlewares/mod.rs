@@ -5,13 +5,13 @@ use axum:: {
 };
 use jsonwebtoken::TokenData;
 use crate::handlers::authenticate::{decode_jwt, Token};
-use crate::errors::{error, ErrorResponse};
+use crate::format_responses::ErrorResponse;
 
 pub mod is_admin;
 pub mod is_authenticate;
 pub mod is_proprietary_post;
 
-pub fn get_token_from_header(req: &Request) -> Result<TokenData<Token>, Json<ErrorResponse>> {
+pub fn get_token_from_header(req: &Request) -> Result<TokenData<Token>, ErrorResponse> {
     let token_header = req.headers().get(http::header::AUTHORIZATION);
 
     match token_header {
@@ -25,7 +25,7 @@ pub fn get_token_from_header(req: &Request) -> Result<TokenData<Token>, Json<Err
             decoded_token
         }
         None => {
-            let err = error(StatusCode::UNAUTHORIZED.to_string(), "No token found".to_string());
+            let err = ErrorResponse::error(StatusCode::UNAUTHORIZED.as_u16(), "No token found".to_string());
             Err(err)
         }
     }

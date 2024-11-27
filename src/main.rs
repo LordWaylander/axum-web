@@ -8,8 +8,8 @@ mod middlewares;
 mod database;
 mod models;
 mod schema;
-mod errors;
 mod repository;
+mod format_responses;
 
 #[tokio::main]
 async fn main() {

@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::models::users::SignInData;
 use crate::repository::users as RepositoryUsers;
-use crate::errors::{error, ErrorResponse};
+use crate::format_responses::ErrorResponse;
 use crate::models::users::UserLogin;
 use std::env;
 
@@ -25,8 +25,8 @@ pub struct Token {
 
 pub async fn login(
     Json(payload): Json<SignInData>
-) -> Result<Json<String>, Json<ErrorResponse>> {
-    let user: Result<UserLogin, Json<ErrorResponse>>  = retrieve_user_by_email(payload.email);
+) -> Result<Json<String>, ErrorResponse> {
+    let user: Result<UserLogin, ErrorResponse>  = retrieve_user_by_email(payload.email);
 
     match user {
         Ok(user) => {
@@ -54,46 +54,46 @@ pub async fn login(
     }
 }
 
-fn retrieve_user_by_email(email: String) -> Result<UserLogin, Json<ErrorResponse>> {
-    let user: Result<UserLogin, Json<ErrorResponse>>  = match RepositoryUsers::get_user_by_email(email) {
+fn retrieve_user_by_email(email: String) -> Result<UserLogin, ErrorResponse> {
+    let user: Result<UserLogin, ErrorResponse>  = match RepositoryUsers::get_user_by_email(email) {
         Ok(user) => {
             match user {
                 Some(u) => {
                     Ok(u)
                 }
                 None => {
-                    let err = error(StatusCode::UNAUTHORIZED.to_string(), "Incorrect user or password".to_string());
+                    let err = ErrorResponse::error(StatusCode::UNAUTHORIZED.as_u16(), "Incorrect user or password".to_string());
                     Err(err)
                 }
             }
         }
         Err(e) => {
-            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
+            let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
             Err(err)
         }
     };
     user
 }
 
-fn verify_password(password_payload: &str, password_hashed: &str) -> Result<bool, Json<ErrorResponse>> {
+fn verify_password(password_payload: &str, password_hashed: &str) -> Result<bool, ErrorResponse> {
     let is_password_good = match verify(password_payload, password_hashed) {
         Ok(value) => {
             if value {
                 Ok(true)
             } else {
-                let err = error(StatusCode::UNAUTHORIZED.to_string(), "Incorrect user or password".to_string());
+                let err = ErrorResponse::error(StatusCode::UNAUTHORIZED.as_u16(), "Incorrect user or password".to_string());
                 Err(err)
             }
         }
         Err(e) => {
-            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
+            let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
             Err(err)
         }
     };
     is_password_good
 }
 
-fn encode_jwt(user: UserLogin) -> Result<String, Json<ErrorResponse>> {
+fn encode_jwt(user: UserLogin) -> Result<String, ErrorResponse> {
     let secret: String = env::var("SECRET_KEY").unwrap().to_string();
     let now = Utc::now();
     let expire: chrono::TimeDelta = Duration::minutes(30);
@@ -112,13 +112,13 @@ fn encode_jwt(user: UserLogin) -> Result<String, Json<ErrorResponse>> {
             Ok("Bearer ".to_string() + &t)
         }
         Err(e) => {
-            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
+            let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
             Err(err)
         }
     }
 }
 
-pub fn decode_jwt(token: &str) -> Result<TokenData<Token>, Json<ErrorResponse>> {
+pub fn decode_jwt(token: &str) -> Result<TokenData<Token>, ErrorResponse> {
     let secret: String = env::var("SECRET_KEY").unwrap().to_string();
 
     let token = decode::<Token>(
@@ -132,7 +132,7 @@ pub fn decode_jwt(token: &str) -> Result<TokenData<Token>, Json<ErrorResponse>> 
             Ok(t)
         }
         Err(e) => {
-            let err = error(StatusCode::INTERNAL_SERVER_ERROR.to_string(), e.to_string());
+            let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
             Err(err)
         }
     }

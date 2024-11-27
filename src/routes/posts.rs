@@ -11,8 +11,14 @@ pub fn init_api_routes() -> Router {
     let app = Router::new()
         .route("/", get(handler_posts::show_posts))
         .route("/show_post/:id", get(handler_posts::get_one_post))
-        .route("/create_post", post(handler_posts::create_post))
+        ;
+
+        let authenticate = Router::new()
+            .route("/create_post", post(handler_posts::create_post))
             .route_layer(middleware::from_fn(is_authenticate::main))
+        ;
+
+        let proprietary = Router::new()
         .route("/update_post/:id", patch(handler_posts::update_post))
             .route_layer(middleware::from_fn(is_authenticate::main))
             .route_layer(middleware::from_fn(is_proprietary_post::main))
@@ -21,5 +27,8 @@ pub fn init_api_routes() -> Router {
             .route_layer(middleware::from_fn(is_proprietary_post::main))
         ;
 
-    return app;
+    return app
+        .merge(authenticate)
+        .merge(proprietary)
+    ;
 }

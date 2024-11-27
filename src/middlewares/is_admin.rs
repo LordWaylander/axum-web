@@ -6,9 +6,9 @@ use axum:: {
     http::StatusCode,
 };
 use crate::middlewares::get_token_from_header;
-use crate::errors::{ErrorResponse, error};
+use crate::format_responses::ErrorResponse;
 
-pub async fn main(req: Request, next: Next) -> Result<Response, Json<ErrorResponse>>   {
+pub async fn main(req: Request, next: Next) -> Result<Response, ErrorResponse>   {
     match get_token_from_header(&req) {
         Ok(token_data) => {
             let roles = token_data.claims.roles;
@@ -16,7 +16,7 @@ pub async fn main(req: Request, next: Next) -> Result<Response, Json<ErrorRespon
             if roles.contains("ROLE_ADMIN") {
                 Ok(next.run(req).await)
             } else {
-                let err = error(StatusCode::UNAUTHORIZED.to_string(),"Not enough rights to access this ressource".to_string() );
+                let err = ErrorResponse::error(StatusCode::UNAUTHORIZED.as_u16(),"Not enough rights to access this ressource".to_string() );
                 Err(err)
             }    
         }

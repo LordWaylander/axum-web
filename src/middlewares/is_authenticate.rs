@@ -5,9 +5,9 @@ use axum:: {
     Json
 };
 use crate::middlewares::get_token_from_header;
-use crate::errors::ErrorResponse;
+use crate::format_responses::ErrorResponse;
 
-pub async fn main(req: Request, next: Next) -> Result<Response, Json<ErrorResponse>>   {
+pub async fn main(req: Request, next: Next) -> Result<Response, ErrorResponse>   {
 
     match get_token_from_header(&req) {
         Ok(_) => {
