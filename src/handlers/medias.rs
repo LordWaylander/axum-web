@@ -10,6 +10,7 @@ use std::io;
 use tokio::{fs::File, io::BufWriter};
 use tokio_util::io::StreamReader;
 use futures::{Stream, TryStreamExt};
+use std::path::PathBuf;
 
 use crate::repository::medias as RepositoryMedia;
 use crate::models::medias::Media;
@@ -66,11 +67,14 @@ pub async fn upload(mut file: Multipart) -> Result<String, ErrorResponse> {
             continue;
         };
 
-        let f = stream_to_file(&file_name, field).await;
+        let path = std::path::Path::new(&env::var("UPLOAD_DIR").unwrap()).join(file_name.clone());
+        let f = stream_to_file(path.clone(), field).await;
 
         match f {
-            Ok(e) => {
-                println!("{:?}", e);
+            Ok(_) => {
+                println!("{:?}", file_name);
+                println!("{:?}", path);
+
                 return Ok("upload ok test".to_string());
             }
             Err(e) => {
@@ -80,10 +84,11 @@ pub async fn upload(mut file: Multipart) -> Result<String, ErrorResponse> {
         }
     
     }
-    Ok("Fin function".to_string())
+    let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), "Error when upload".to_string());
+    return Err(err);
 }
 
-async fn stream_to_file<S, E>(path: &str, stream: S) -> Result<(), String>
+async fn stream_to_file<S, E>(path: PathBuf, stream: S) -> Result<(), String>
 where
     S: Stream<Item = Result<Bytes, E>>,
     E: Into<BoxError>,
@@ -95,7 +100,6 @@ where
         futures::pin_mut!(body_reader);
 
         // Create the file. `File` implements `AsyncWrite`.
-        let path = std::path::Path::new(&env::var("UPLOAD_DIR").unwrap()).join(path);
         let mut file = BufWriter::new(File::create(path).await?);
 
         // Copy the body into the file.
