@@ -35,9 +35,6 @@ pub async fn show_posts() -> Result<Json<Vec<PostResponse>>, ErrorResponse> {
     }
 }
 
-use axum::debug_handler;
-
-#[debug_handler]
 pub async fn get_one_post(Path(id): Path<i32>) -> Result<Json<PostResponse>, ErrorResponse> {
 
     let result = RepositoryPost::get_one_post(id);

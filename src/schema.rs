@@ -1,6 +1,16 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    medias (id) {
+        id -> Integer,
+        #[max_length = 255]
+        file_name -> Varchar,
+        #[max_length = 255]
+        url -> Varchar,
+    }
+}
+
+diesel::table! {
     posts (id) {
         id -> Integer,
         #[max_length = 255]
@@ -27,6 +37,7 @@ diesel::table! {
 diesel::joinable!(posts -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    medias,
     posts,
     users,
 );

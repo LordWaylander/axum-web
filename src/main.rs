@@ -35,4 +35,5 @@ fn check_env() {
     env::var("ADDRESS").expect("ADDRESS must be set");
     env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     env::var("SECRET_KEY").expect("SECRET_KEY must be set");
+    env::var("UPLOAD_DIR").expect("UPLOAD_DIR must be set");
 }
