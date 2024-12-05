@@ -1,4 +1,4 @@
-use crate::models::medias::Media;
+use crate::models::medias::{Media, NewMedia, UpdateMedia};
 use crate::schema::medias;
 use crate::schema::medias::dsl::*;
 use crate::database;
@@ -36,7 +36,7 @@ pub fn get_one_media(other_id: i32) -> Result<Media, diesel::result::Error> {
     return result;
 }
 
-pub fn create_media(payload: Media) -> Result<Media, diesel::result::Error> {
+pub fn create_media(payload: NewMedia) -> Result<Media, diesel::result::Error> {
     let connection = &mut database::establish_connection();
 
     let result: Result<Media, Error> = connection.transaction(|connection| {
@@ -51,6 +51,46 @@ pub fn create_media(payload: Media) -> Result<Media, diesel::result::Error> {
 
         Ok(media)
     }); 
+
+    return result;
+}
+
+pub fn update_media(payload: UpdateMedia) -> Result<Media, diesel::result::Error> {
+    let connection = &mut database::establish_connection();
+
+    let result: Result<Media, Error> = connection.transaction(|connection| {
+
+        diesel::update(medias::table.find(payload.id))
+            .set(&payload)
+            .execute(connection)?;
+
+            let media = medias::table
+            .find(payload.id)
+            .select(Media::as_select())
+            .get_result(connection)?;
+
+        Ok(media)
+    });
+
+    return result;
+}
+
+pub fn delete_media(other_id: i32) -> Result<Media, diesel::result::Error> {
+    let connection = &mut database::establish_connection();
+
+    let result: Result<Media, Error> = connection.transaction(|connection| {
+
+        let media = medias::table
+        .find(&other_id)
+        .select(Media::as_select())
+        .get_result(connection)?;
+
+        diesel::delete(medias::table)
+        .filter(id.eq(&other_id))
+        .execute(connection)?;
+        
+        Ok(media)
+    });
 
     return result;
 }

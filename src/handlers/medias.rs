@@ -7,13 +7,13 @@ use axum::{
 };
 use std::env;
 use std::io::{Error, ErrorKind};
-use tokio::{fs::File, io::BufWriter};
+use tokio::{fs::{self, File}, io::BufWriter};
 use tokio_util::io::StreamReader;
 use futures::{Stream, TryStreamExt};
 use std::path::PathBuf;
 
 use crate::repository::medias as RepositoryMedia;
-use crate::models::medias::Media;
+use crate::models::medias::{Media, NewMedia, UpdateMedia};
 use crate::format_responses::ErrorResponse;
 
 pub async fn get_all_upload() -> Result<Json<Vec<Media>>, ErrorResponse> {
@@ -63,7 +63,7 @@ pub async fn post_upload(file: Multipart) -> Result<Json<Media>, ErrorResponse> 
 
     match upload {
         Ok((file_name, path)) => {
-            let payload = Media {
+            let payload = NewMedia {
                 file_name,
                 url: format!("{}/{}", env::var("ADDRESS").unwrap(), path.to_str().unwrap().to_string()),
                 path: path.to_str().unwrap().to_string()
@@ -80,6 +80,64 @@ pub async fn post_upload(file: Multipart) -> Result<Json<Media>, ErrorResponse> 
                     Err(err)
                 },
             }
+        }
+        Err(e) => {
+            let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
+            Err(err)
+        }
+    }
+}
+
+pub async fn update_upload(Path(id): Path<i32>, file: Multipart) -> Result<Json<Media>, ErrorResponse>  {
+    let upload = upload(file).await;
+
+    match upload {
+        Ok((file_name, path)) => {
+            let payload = UpdateMedia {
+                id,
+                file_name,
+                url: format!("{}/{}", env::var("ADDRESS").unwrap(), path.to_str().unwrap().to_string()),
+                path: path.to_str().unwrap().to_string()
+            };
+
+            let result = RepositoryMedia::update_media(payload);
+            
+            match result {
+                Ok(response) => {
+                    Ok(Json(response))
+                },
+                Err(e) => {
+                    let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
+                    Err(err)
+                },
+            }
+        }
+        Err(e) => {
+            let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
+            Err(err)
+        }
+    }
+}
+
+pub async fn delete_upload(Path(id): Path<i32>) -> Result<Json<String>, ErrorResponse> {
+    let result = RepositoryMedia::delete_media(id);
+
+    match result {
+        Ok(media) => {
+            let _ = fs::remove_file(media.path.clone()).await;
+            Ok(Json(format!("Media : {}, ID : {}, has been deleted", media.file_name, media.id)))
+            /*
+            pas de check si le fichier est bien delete et renvoyé à l'user, plutot faire un log ?
+            match removed {
+                Ok(_) => {
+                    Ok(Json(media))
+                }
+                Err(e) => {
+                    let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
+                    Err(err)
+                }
+            }
+            */
         }
         Err(e) => {
             let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
