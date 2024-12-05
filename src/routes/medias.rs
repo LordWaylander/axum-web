@@ -4,7 +4,7 @@ use axum::{
     middleware::{self},
 };
 
-use tower_http::services::{ServeDir, ServeFile};
+use tower_http::services::ServeDir;
 
 use crate::handlers::medias as handler_upload;
 
