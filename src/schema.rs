@@ -7,6 +7,8 @@ diesel::table! {
         file_name -> Varchar,
         #[max_length = 255]
         url -> Varchar,
+        #[max_length = 255]
+        path -> Varchar,
     }
 }
 

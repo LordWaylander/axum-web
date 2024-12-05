@@ -35,3 +35,22 @@ pub fn get_one_media(other_id: i32) -> Result<Media, diesel::result::Error> {
 
     return result;
 }
+
+pub fn create_media(payload: Media) -> Result<Media, diesel::result::Error> {
+    let connection = &mut database::establish_connection();
+
+    let result: Result<Media, Error> = connection.transaction(|connection| {
+        diesel::insert_into(medias::table)
+        .values(&payload)
+        .execute(connection)?;
+
+        let media = medias::table
+        .order(medias::id.desc())
+        .select(Media::as_select())
+        .get_result(connection)?;
+
+        Ok(media)
+    }); 
+
+    return result;
+}
