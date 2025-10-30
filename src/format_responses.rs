@@ -1,8 +1,5 @@
 use serde::Serialize;
-use axum::{
-    response::{IntoResponse, Response},
-    http::StatusCode,
-};
+
 use crate::models::{
     users::User,
     posts::Post
@@ -20,6 +17,7 @@ pub struct PostResponse {
     pub user: User
 }
 
+#[derive(Serialize)]
 pub struct ErrorResponse {
     pub error: String,
     pub code_error: u16,
@@ -36,21 +34,3 @@ impl ErrorResponse {
         error_response
     }
 }
-
-impl IntoResponse for ErrorResponse {
-    fn into_response(self) -> Response {
-
-        (StatusCode::from_u16(self.code_error).unwrap(), self.error).into_response()
-    }
-    
-}
-
-/*impl IntoResponse for ErrorResponse {
-    
-}*/
-
-/*impl IntoResponse for FormatResponseUser {
-    fn into_response(self) -> Response {
-        Json(self).into_response()
-    }
-}*/

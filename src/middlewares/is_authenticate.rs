@@ -1,19 +1,21 @@
 use axum:: {
-    extract::Request,
+    extract::{Request, Json},
     middleware::Next,
-    response::Response,
+    response::IntoResponse,
+    http::StatusCode,
 };
 use crate::middlewares::get_token_from_header;
-use crate::format_responses::ErrorResponse;
 
-pub async fn main(req: Request, next: Next) -> Result<Response, ErrorResponse>   {
+pub async fn main(req: Request, next: Next) -> impl IntoResponse   {
 
     match get_token_from_header(&req) {
         Ok(_) => {
             Ok(next.run(req).await) 
         }
         Err(e) => {
-            Err(e)
+            Err(
+                (StatusCode::from_u16(e.code_error).unwrap(), Json(e))
+            )
         }
     }
 }

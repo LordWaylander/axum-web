@@ -4,6 +4,7 @@ use axum::{
     extract::{Path, Multipart},
     BoxError,
     body::Bytes,
+    response::IntoResponse
 };
 use std::env;
 use std::io::{Error, ErrorKind};
@@ -13,17 +14,19 @@ use futures::{Stream, TryStreamExt};
 use std::path::PathBuf;
 
 use crate::repository::medias as RepositoryMedia;
-use crate::models::medias::{Media, NewMedia, UpdateMedia};
+use crate::models::medias::{NewMedia, UpdateMedia};
 use crate::format_responses::ErrorResponse;
 
-pub async fn get_all_upload() -> Result<Json<Vec<Media>>, ErrorResponse> {
+pub async fn get_all_upload() -> impl IntoResponse {
     let result = RepositoryMedia::get_all_medias();
 
     match result {
         Ok(response) => {
             if response.len() == 0 {
                 let err = ErrorResponse::error(StatusCode::OK.as_u16(),"No medias found".to_string());
-                Err(err)
+                Err(
+                    (StatusCode::from_u16(err.code_error).unwrap(), Json(err))
+                )
             } else {
                 
                 let mut resp_json = Vec::new();
@@ -33,32 +36,36 @@ pub async fn get_all_upload() -> Result<Json<Vec<Media>>, ErrorResponse> {
                 }
 
 
-                Ok(Json(resp_json))
+                Ok((StatusCode::OK, Json(resp_json)))
             }
         },
         Err(e) => {
             let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(),e.to_string() );
-            Err(err)
+            Err(
+                (StatusCode::from_u16(err.code_error).unwrap(), Json(err))
+            )
         },
     }
 
 }
 
-pub async fn get_one_upload(Path(id): Path<i32>) -> Result<Json<Media>, ErrorResponse> {
+pub async fn get_one_upload(Path(id): Path<i32>) -> impl IntoResponse {
     let result = RepositoryMedia::get_one_media(id);
 
     match result {
         Ok(response) => {
-            Ok(Json(response))
+            Ok((StatusCode::OK, Json(response)))
         },
         Err(e) => {
             let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
-            Err(err)
+            Err(
+                (StatusCode::from_u16(err.code_error).unwrap(), Json(err))
+            )
         },
     }
 }
 
-pub async fn post_upload(file: Multipart) -> Result<Json<Media>, ErrorResponse> {
+pub async fn post_upload(file: Multipart) -> impl IntoResponse {
     let upload = upload(file).await;
 
     match upload {
@@ -73,22 +80,26 @@ pub async fn post_upload(file: Multipart) -> Result<Json<Media>, ErrorResponse> 
             
             match result {
                 Ok(response) => {
-                    Ok(Json(response))
+                    Ok((StatusCode::OK, Json(response)))
                 },
                 Err(e) => {
                     let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
-                    Err(err)
+                    Err(
+                        (StatusCode::from_u16(err.code_error).unwrap(), Json(err))
+                    )
                 },
             }
         }
         Err(e) => {
             let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
-            Err(err)
+            Err(
+                (StatusCode::from_u16(err.code_error).unwrap(), Json(err))
+            )
         }
     }
 }
 
-pub async fn update_upload(Path(id): Path<i32>, file: Multipart) -> Result<Json<Media>, ErrorResponse>  {
+pub async fn update_upload(Path(id): Path<i32>, file: Multipart) -> impl IntoResponse  {
     let upload = upload(file).await;
 
     match upload {
@@ -104,28 +115,32 @@ pub async fn update_upload(Path(id): Path<i32>, file: Multipart) -> Result<Json<
             
             match result {
                 Ok(response) => {
-                    Ok(Json(response))
+                    Ok((StatusCode::OK, Json(response)))
                 },
                 Err(e) => {
                     let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
-                    Err(err)
+                    Err(
+                        (StatusCode::from_u16(err.code_error).unwrap(), Json(err))
+                    )
                 },
             }
         }
         Err(e) => {
             let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
-            Err(err)
+            Err(
+                (StatusCode::from_u16(err.code_error).unwrap(), Json(err))
+            )
         }
     }
 }
 
-pub async fn delete_upload(Path(id): Path<i32>) -> Result<Json<String>, ErrorResponse> {
+pub async fn delete_upload(Path(id): Path<i32>) -> impl IntoResponse {
     let result = RepositoryMedia::delete_media(id);
 
     match result {
         Ok(media) => {
             let _ = fs::remove_file(media.path.clone()).await;
-            Ok(Json(format!("Media : {}, ID : {}, has been deleted", media.file_name, media.id)))
+            Ok((StatusCode::OK, Json(format!("Media : {}, ID : {}, has been deleted", media.file_name, media.id))))
             /*
             pas de check si le fichier est bien delete et renvoyé à l'user, plutot faire un log ?
             match removed {
@@ -141,12 +156,14 @@ pub async fn delete_upload(Path(id): Path<i32>) -> Result<Json<String>, ErrorRes
         }
         Err(e) => {
             let err = ErrorResponse::error(StatusCode::INTERNAL_SERVER_ERROR.as_u16(), e.to_string());
-            Err(err)
+            Err(
+                (StatusCode::from_u16(err.code_error).unwrap(), Json(err))
+            )
         }
     }
 }
 
-pub async fn upload(mut file: Multipart) -> Result<(std::string::String, PathBuf), Error> {
+async fn upload(mut file: Multipart) -> Result<(std::string::String, PathBuf), Error> {
     // https://github.com/tokio-rs/axum/blob/main/examples/stream-to-file/src/main.rs
     while let Ok(Some(field)) = file.next_field().await {
         let file_name = if let Some(file_name) = field.file_name() {

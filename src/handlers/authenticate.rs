@@ -1,6 +1,7 @@
 use axum::{
     extract::Json,
     http::StatusCode,
+    response::IntoResponse
 };
 use bcrypt::verify;
 use chrono::{Duration, Utc};
@@ -25,7 +26,7 @@ pub struct Token {
 
 pub async fn login(
     Json(payload): Json<SignInData>
-) -> Result<Json<String>, ErrorResponse> {
+) -> impl IntoResponse {
     let user: Result<UserLogin, ErrorResponse>  = retrieve_user_by_email(payload.email);
 
     match user {
@@ -36,20 +37,26 @@ pub async fn login(
                 Ok(_) => {
                     match encode_jwt(user) {
                         Ok(t) => {
-                            Ok(Json(t.to_string()))
+                            Ok((StatusCode::OK, Json(t.to_string())))
                         }
                         Err(e) => {
-                            Err(e)
+                            Err(
+                                (StatusCode::from_u16(e.code_error).unwrap(), Json(e))
+                            )
                         }
                     }
                 }
                 Err(e) => {
-                    Err(e)
+                    Err(
+                        (StatusCode::from_u16(e.code_error).unwrap(), Json(e))
+                    )
                 }
             }
         }
         Err(e) => {
-            Err(e)
+            Err(
+                (StatusCode::from_u16(e.code_error).unwrap(), Json(e))
+            )
         }
     }
 }
