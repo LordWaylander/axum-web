@@ -2,7 +2,7 @@ use axum::{
     http::StatusCode,
     Json,
     extract::Path,
-    response::IntoResponse
+    response::{IntoResponse, Html}
 };
 use crate::repository::post as RepositoryPost;
 use crate::models::posts::{NewPost, UpdatePost};
@@ -28,9 +28,39 @@ pub async fn show_posts() -> impl IntoResponse {
                 }
 
 
-                Ok(
-                    (StatusCode::OK, Json(resp_json))
-                )
+                // Ok(
+                //     (StatusCode::OK, Json(resp_json))
+                // )
+                Ok(Html(
+                    format!(
+                        r#"
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <title>Document</title>
+                        </head>
+                        <body>
+                            <h1>Liste des posts</h1>
+                            <div>
+                                {}
+                            </div>
+                        </body>
+                        </html>
+                        "#,
+                        resp_json.iter().map(|post| format!(
+                            r#"<div>
+                                <h2>{}</h2>
+                                <p>Par: {}</p>
+                                <p>{}</p>
+                            </div>"#,
+                            post.post.title,
+                            post.user.username,
+                            post.post.body
+                        )).collect::<Vec<_>>().join("\n")
+                    )
+                ))
             }
         },
         Err(e) => {
